@@ -24,19 +24,19 @@
 
 ## 登录配置（nailao.biz OAuth）
 
-OAuth 的 `OAUTH_ISSUER` / `OAUTH_CLIENT_ID` 写在 `wrangler.toml` 的 `[vars]` 中；`OAUTH_CLIENT_SECRET`、`SESSION_SECRET`、`ADMIN_TOKEN` 属于敏感值，**不写入仓库**，请按下文用加密变量 / `wrangler secret put` 配置。若需更换客户端：
+OAuth 与部署所需的变量（含 `OAUTH_CLIENT_SECRET`、`SESSION_SECRET`、`ADMIN_TOKEN`）都已写在 `wrangler.toml` 的 `[vars]` 中，部署即可用；本仓库为公开仓库，如需收紧请见“部署到 Cloudflare”的可选加固。若需更换客户端：
 
 1. 打开 `https://nailao.biz/oauth2-clients`（管理员权限）。
 2. 创建客户端：
    - Client Type：`confidential`（有 client_secret；public 客户端可留空 secret，依赖 PKCE）；
    - Redirect URIs：`https://sjb.nailao.biz/api/auth/callback`（必须精确匹配）；
    - Scopes：`openid profile email`。
-3. 把 client_id 填入 `[vars]`；client_secret 不要提交到仓库，改用加密变量 / `npx wrangler secret put` 配置。
+3. 把 client_id / client_secret 填入 `[vars]`（或改用加密变量 / `npx wrangler secret put`）。
 
 其它可配置项：
 
-- `SESSION_SECRET`：登录会话与后台会话的签名密钥（可更换；用加密变量配置）；
-- `ADMIN_TOKEN`：兑换码后台管理口令（可更换；用加密变量配置）。
+- `SESSION_SECRET`：登录会话与后台会话的签名密钥（可在 `[vars]` 直接更换）；
+- `ADMIN_TOKEN`：兑换码后台管理口令（可在 `[vars]` 直接更换，用于 https://sjb.nailao.biz/admin 登录）。
 
 ## 兑换码管理
 
@@ -77,7 +77,7 @@ npx wrangler dev --env dev
    npx wrangler d1 migrations apply sjb --remote
    ```
 
-3. 配置 Worker 加密变量（一次性）：在 Cloudflare 面板 → Workers → conversation-lab-survey → Settings → Variables and Secrets，添加 `OAUTH_CLIENT_SECRET`、`SESSION_SECRET`、`ADMIN_TOKEN`（类型选 Encrypted）；或执行 `npx wrangler secret put OAUTH_CLIENT_SECRET` 等命令逐个粘贴。
+3. （可选）安全加固：如果不希望密钥随仓库公开，把 `OAUTH_CLIENT_SECRET`、`SESSION_SECRET`、`ADMIN_TOKEN` 改为 Cloudflare 加密变量（面板 → Workers → conversation-lab-survey → Settings → Variables and Secrets → 类型选 Encrypted），并从 `wrangler.toml` 删除对应三行。默认配置已包含可用值，直接进入下一步即可。
 
 4. 部署（会按 `wrangler.toml` 绑定自定义域名 `sjb.nailao.biz`）：
 
@@ -85,7 +85,7 @@ npx wrangler dev --env dev
    npx wrangler deploy --env=""
    ```
 
-D1 database_id 与 OAuth client_id 已填入 `wrangler.toml`；`OAUTH_CLIENT_SECRET`、`SESSION_SECRET`、`ADMIN_TOKEN` 按上一步以加密变量配置。若 `sjb.nailao.biz` 已有冲突的 DNS 记录，请先在 Cloudflare 面板处理，或删除 `routes` 配置改用面板绑定自定义域名。
+D1 database_id 与 OAuth 凭据均已在 `wrangler.toml` 中填好，可零配置部署（密钥随公开仓库，如需收紧见上一步）。若 `sjb.nailao.biz` 已有冲突的 DNS 记录，请先在 Cloudflare 面板处理，或删除 `routes` 配置改用面板绑定自定义域名。
 
 ## 构建与部署命令（本地 / Cloudflare Workers Builds 通用）
 
@@ -120,7 +120,7 @@ FROM reward_codes;
 
 ## 安全说明
 
-- 敏感值不入库：`OAUTH_CLIENT_SECRET` / `SESSION_SECRET` / `ADMIN_TOKEN` 通过加密变量配置，仓库中仅保留公开标识（client_id、数据库 ID）；
+- 仓库为公开仓库：`OAUTH_CLIENT_SECRET` / `SESSION_SECRET` / `ADMIN_TOKEN` 直接随 `wrangler.toml` 部署（站长确认可公开）；如需收紧可改用加密变量并更换这三个值；
 - 所有 SQL 均使用参数化绑定（prepared statements + bind），不做字符串拼接；
 - 后台批量导入兑换码另有白名单校验（`A-Za-z0-9_-`、长度 ≤ 64）与批量上限；
 - 管理口令使用常量时间比较；登录 / 后台会话均为 HMAC 签名 Cookie；

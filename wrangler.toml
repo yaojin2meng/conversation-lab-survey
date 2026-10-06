@@ -12,9 +12,11 @@ routes = [
 # OAuth 登录（提供方：nailao.biz）
 OAUTH_ISSUER = "https://nailao.biz"
 OAUTH_CLIENT_ID = "llC-CcjaadCD_AZuX8xjb87ULXC5YMwZ"
-# 敏感值（OAUTH_CLIENT_SECRET / SESSION_SECRET / ADMIN_TOKEN）不写入仓库：
-# 生产环境请在 Cloudflare 面板为 Worker 添加“加密变量”，或执行 `npx wrangler secret put <名称>`；
-# 本地开发可写入 .dev.vars（已在 .gitignore 中忽略）。
+OAUTH_CLIENT_SECRET = "UvRV0z8cKJaiTYiL4Q61i-v0u8gJ8KbWRh_SKt9_6rPaU3tu"
+# 会话签名密钥（可自行更换；如需收紧安全，可改用加密变量）
+SESSION_SECRET = "afe6976afc02f2506fdbfb63aa3bf4153e8a71820b48b9766a022d43b60624e4"
+# 兑换码后台管理口令（用于 https://sjb.nailao.biz/admin 登录，可自行更换）
+ADMIN_TOKEN = "e55557f5a70234926d90862e4d4f3889"
 
 [assets]
 directory = "./public"
