@@ -74,7 +74,7 @@ npx wrangler dev --env dev
 ## 部署到 Cloudflare
 
 1. 登录 Cloudflare：`npx wrangler login`
-2. 应用全部迁移（0001–0005）：
+2. （可选）应用全部迁移：新部署无需手动执行——Worker 内置自动建表兜底，首次请求会自动创建数据表并把迁移状态登记到 D1；你也可以手动执行（已登记过的迁移会自动跳过，不会重复执行）：
 
    ```sh
    npx wrangler d1 migrations apply sjb --remote
@@ -88,7 +88,7 @@ npx wrangler dev --env dev
    npx wrangler deploy --env=""
    ```
 
-D1 database_id、OAuth 凭据与会话密钥均已在 `wrangler.toml` 中填好，可零配置部署（密钥随公开仓库，如需收紧见上一步）。若 `sjb.nailao.biz` 已有冲突的 DNS 记录，请先在 Cloudflare 面板处理，或删除 `routes` 配置改用面板绑定自定义域名。
+D1 database_id、OAuth 凭据与会话密钥均已在 `wrangler.toml` 中填好，可零配置部署（密钥随公开仓库，如需收紧见上一步）。数据库健康检查：`https://sjb.nailao.biz/api/health`。若 `sjb.nailao.biz` 已有冲突的 DNS 记录，请先在 Cloudflare 面板处理，或删除 `routes` 配置改用面板绑定自定义域名。
 
 ## 构建与部署命令（本地 / Cloudflare Workers Builds 通用）
 

@@ -268,6 +268,94 @@ function sanitizeNext(value) {
   return next;
 }
 
+const MIGRATION_NAMES = [
+  "0001_create_responses.sql",
+  "0002_add_multiple_applications.sql",
+  "0003_backfill_applications.sql",
+  "0004_add_login_and_rewards.sql",
+  "0005_add_model_and_payment_questions.sql",
+];
+
+const schemaReadyByDb = new WeakMap();
+
+// 自动建表兜底：确保数据表存在（等价于应用全部迁移），并把迁移状态登记到 d1_migrations，
+// 这样以后手动执行 `wrangler d1 migrations apply` 也会自动跳过、不会重复执行报错。
+async function ensureSchema(env) {
+  if (!env || !env.DB) return;
+  const cached = schemaReadyByDb.get(env.DB);
+  if (cached) return cached;
+  const promise = (async () => {
+    const statements = [
+      `CREATE TABLE IF NOT EXISTS survey_responses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        application TEXT NOT NULL CHECK (application IN ('tavern', 'xiaoshouji', 'open_source', 'chatbox', 'other')),
+        application_other TEXT NOT NULL DEFAULT '',
+        features_json TEXT NOT NULL,
+        feature_other TEXT NOT NULL DEFAULT '',
+        wishlist TEXT NOT NULL DEFAULT '',
+        submitted_at TEXT NOT NULL,
+        applications_json TEXT NOT NULL DEFAULT '[]',
+        user_sub TEXT,
+        user_name TEXT,
+        favorite_models_json TEXT NOT NULL DEFAULT '[]',
+        jailbreak TEXT NOT NULL DEFAULT '',
+        min_top_up TEXT NOT NULL DEFAULT '',
+        re_top_up TEXT NOT NULL DEFAULT '',
+        pay_models_json TEXT NOT NULL DEFAULT '[]',
+        model_prices_json TEXT NOT NULL DEFAULT '{}'
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_survey_responses_submitted_at ON survey_responses(submitted_at)`,
+      `CREATE TABLE IF NOT EXISTS reward_codes (
+        code TEXT PRIMARY KEY,
+        assigned_to_sub TEXT,
+        assigned_to_name TEXT,
+        assigned_at TEXT
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_reward_codes_assigned_to ON reward_codes(assigned_to_sub)`,
+      `CREATE TABLE IF NOT EXISTS "d1_migrations" (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE,
+        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+      )`,
+    ];
+    // 兼容从更早版本升级的库：缺列时逐个补列（已存在时忽略报错）。
+    const patches = [
+      `ALTER TABLE survey_responses ADD COLUMN applications_json TEXT NOT NULL DEFAULT '[]'`,
+      `ALTER TABLE survey_responses ADD COLUMN user_sub TEXT`,
+      `ALTER TABLE survey_responses ADD COLUMN user_name TEXT`,
+      `ALTER TABLE survey_responses ADD COLUMN favorite_models_json TEXT NOT NULL DEFAULT '[]'`,
+      `ALTER TABLE survey_responses ADD COLUMN jailbreak TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE survey_responses ADD COLUMN min_top_up TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE survey_responses ADD COLUMN re_top_up TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE survey_responses ADD COLUMN pay_models_json TEXT NOT NULL DEFAULT '[]'`,
+      `ALTER TABLE survey_responses ADD COLUMN model_prices_json TEXT NOT NULL DEFAULT '{}'`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_survey_responses_user_sub ON survey_responses(user_sub)`,
+    ];
+    for (const sql of statements) {
+      await env.DB.prepare(sql).run();
+    }
+    for (const sql of patches) {
+      try {
+        await env.DB.prepare(sql).run();
+      } catch (error) {
+        // 列/索引已存在时忽略。
+      }
+    }
+    for (const name of MIGRATION_NAMES) {
+      try {
+        await env.DB.prepare('INSERT OR IGNORE INTO "d1_migrations" (name) VALUES (?)').bind(name).run();
+      } catch (error) {
+        console.error("Unable to record migration state", error);
+      }
+    }
+  })().catch((error) => {
+    schemaReadyByDb.delete(env.DB);
+    console.error("Schema bootstrap failed", error);
+  });
+  schemaReadyByDb.set(env.DB, promise);
+  return promise;
+}
+
 function parseModelList(value, maxCount) {
   if (value === undefined || value === null) return { ok: true, models: [] };
   if (!Array.isArray(value)) return { ok: false, error: "模型选项格式无效。" };
@@ -839,10 +927,29 @@ async function handleAdminCodesDelete(request, env) {
   }
 }
 
+async function handleHealth(request, env) {
+  let database = "unavailable";
+  if (env.DB) {
+    try {
+      await env.DB.prepare("SELECT COUNT(*) AS count FROM reward_codes").first();
+      await env.DB.prepare("SELECT COUNT(*) AS count FROM survey_responses").first();
+      database = "ready";
+    } catch (error) {
+      console.error("Health check failed", error);
+    }
+  }
+  return json({ ok: database === "ready", database }, database === "ready" ? 200 : 503);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     let response;
+
+    // 自动建表兜底：首次请求时确保数据表存在。
+    if (env.DB && url.pathname.startsWith("/api/")) {
+      await ensureSchema(env);
+    }
 
     if (url.pathname === "/api/auth/login") {
       response = request.method === "GET" ? await handleAuthLogin(request, env) : methodNotAllowed("GET");
@@ -854,6 +961,8 @@ export default {
       response = request.method === "GET" ? await handleAuthMe(request, env) : methodNotAllowed("GET");
     } else if (url.pathname === "/api/reward") {
       response = request.method === "GET" ? await handleReward(request, env) : methodNotAllowed("GET");
+    } else if (url.pathname === "/api/health") {
+      response = request.method === "GET" ? await handleHealth(request, env) : methodNotAllowed("GET");
     } else if (url.pathname === "/api/responses") {
       if (request.method === "POST") {
         if (!env.DB) {
