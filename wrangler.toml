@@ -1,0 +1,38 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "conversation-lab-survey"
+main = "src/index.js"
+compatibility_date = "2025-05-07"
+
+# 自定义域名（部署时绑定 sjb.nailao.biz；该域名需与本 Worker 在同一 Cloudflare 账号下）
+routes = [
+  { pattern = "sjb.nailao.biz", custom_domain = true }
+]
+
+[vars]
+# OAuth 登录（提供方：nailao.biz）
+OAUTH_ISSUER = "https://nailao.biz"
+OAUTH_CLIENT_ID = "llC-CcjaadCD_AZuX8xjb87ULXC5YMwZ"
+# 敏感值（OAUTH_CLIENT_SECRET / SESSION_SECRET / ADMIN_TOKEN）不写入仓库：
+# 生产环境请在 Cloudflare 面板为 Worker 添加“加密变量”，或执行 `npx wrangler secret put <名称>`；
+# 本地开发可写入 .dev.vars（已在 .gitignore 中忽略）。
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+not_found_handling = "404-page"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sjb"
+database_id = "15beb510-ea07-478c-b48d-ac83321953bf"
+migrations_dir = "migrations"
+
+[env.dev]
+name = "conversation-lab-survey-dev"
+
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "sjb"
+database_id = "local-dev-db"
+migrations_dir = "migrations"

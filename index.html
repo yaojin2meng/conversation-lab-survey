@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f7f7fc" id="themeColorMeta">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="关于对话应用使用体验的小调查，欢迎分享你期待的功能。">
+  <script>
+    (() => {
+      // 主题模式：auto（跟随系统，默认）/ light / dark。data-theme 始终是实际生效的配色。
+      const root = document.documentElement;
+      let mode = 'auto';
+      try {
+        const saved = localStorage.getItem('conversation-lab-survey-theme-v1');
+        if (saved === 'dark' || saved === 'light' || saved === 'auto') mode = saved;
+      } catch (_) {}
+      const systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.dataset.themeMode = mode;
+      root.dataset.theme = mode === 'auto' ? (systemDark ? 'dark' : 'light') : mode;
+    })();
+  </script>
+  <title>对话应用体验调研｜对话观察室</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #22243a;
+      --muted: #77798f;
+      --purple: #6558d9;
+      --purple-dark: #5145c5;
+      --purple-soft: #f1efff;
+      --eyebrow-bg: #eceaff;
+      --eyebrow-ink: #6256d1;
+      --line: #e9e8f1;
+      --surface: #ffffff;
+      --research-bg: rgba(255,255,255,.7);
+      --green: #3d9275;
+      --page-bg: #f8f8fc;
+      --page-glow-a: rgba(224, 220, 255, .58);
+      --page-glow-b: rgba(224, 244, 239, .62);
+      --subtle-surface: #fbfaff;
+      --option-surface: #fff;
+      --option-selected: #f8f7ff;
+      --muted-text: #77798d;
+      --soft-text: #9697a8;
+      --panel-border: rgba(235, 234, 243, .88);
+      --divider: #f0eff5;
+      --progress-track: #efedf8;
+      --number-bg: #f0eeff;
+      --number-ink: #6558d9;
+      --field-bg: #fff;
+      --field-border: #e4e3ed;
+      --placeholder: #b4b4c2;
+      --field-focus: #9187e8;
+      --focus-glow: rgba(101, 88, 217, .10);
+      --icon-purple-bg: #f1efff;
+      --icon-purple-ink: #7369d2;
+      --icon-mint-bg: #edf7f2;
+      --icon-mint-ink: #4c927a;
+      --icon-peach-bg: #fff3ed;
+      --icon-peach-ink: #bd815d;
+      --icon-blue-bg: #edf4fb;
+      --icon-blue-ink: #5e87ba;
+      --green-halo: #ebf7f0;
+      --success-bg: #eaf6f0;
+      --success-ink: #3d9275;
+      --summary-bg: #fbfbfd;
+      --summary-border: #eeedf4;
+      --summary-divider: #efeff4;
+      --summary-label: #999aab;
+      --summary-ink: #55576d;
+      --secondary-bg: #fff;
+      --secondary-border: #e5e3ef;
+      --secondary-ink: #686a80;
+      --storage-bg: rgba(255,255,255,.7);
+      --storage-border: #e8edf0;
+      --storage-ink: #7e8791;
+      --storage-icon: #5d9b80;
+      --footer-ink: #a0a1b0;
+      --error-ink: #bd5360;
+      --shadow: 0 22px 70px rgba(45, 39, 94, .10);
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --ink: #eeedf7;
+      --muted: #b0aec3;
+      --purple: #b4aaff;
+      --purple-dark: #9b8ef5;
+      --purple-soft: #292541;
+      --eyebrow-bg: #302d4b;
+      --eyebrow-ink: #c3baff;
+      --line: #373547;
+      --surface: #1e1d29;
+      --research-bg: rgba(36,35,48,.82);
+      --green: #80d1ad;
+      --page-bg: #12121b;
+      --page-glow-a: rgba(82, 69, 151, .24);
+      --page-glow-b: rgba(34, 105, 87, .17);
+      --subtle-surface: #242330;
+      --option-surface: #24232f;
+      --option-selected: #302c45;
+      --muted-text: #c0bed0;
+      --soft-text: #a29fb5;
+      --panel-border: #353344;
+      --divider: #343241;
+      --progress-track: #353344;
+      --number-bg: #302d4b;
+      --number-ink: #c3baff;
+      --field-bg: #24232f;
+      --field-border: #454355;
+      --placeholder: #8f8ca3;
+      --field-focus: #b4aaff;
+      --focus-glow: rgba(180, 170, 255, .20);
+      --icon-purple-bg: #302d4b;
+      --icon-purple-ink: #beb5ff;
+      --icon-mint-bg: #1e3933;
+      --icon-mint-ink: #8dd5b4;
+      --icon-peach-bg: #3c2b26;
+      --icon-peach-ink: #e6ad8f;
+      --icon-blue-bg: #222f40;
+      --icon-blue-ink: #9fc3ef;
+      --green-halo: #20362f;
+      --success-bg: #1e3930;
+      --success-ink: #91d9b8;
+      --summary-bg: #242330;
+      --summary-border: #393746;
+      --summary-divider: #393746;
+      --summary-label: #aaa7bb;
+      --summary-ink: #deddea;
+      --secondary-bg: #24232f;
+      --secondary-border: #454355;
+      --secondary-ink: #d0cede;
+      --storage-bg: rgba(36,35,48,.9);
+      --storage-border: #353344;
+      --storage-ink: #b0aec3;
+      --storage-icon: #8dd5b4;
+      --footer-ink: #8f8ca3;
+      --error-ink: #f29aa2;
+      --shadow: 0 22px 70px rgba(0, 0, 0, .30);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; }
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 8% 4%, var(--page-glow-a), transparent 34rem),
+        radial-gradient(ellipse at 93% 22%, var(--page-glow-b), transparent 26rem),
+        var(--page-bg);
+      transition: color .2s ease, background-color .2s ease;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input, textarea { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    [hidden] { display: none !important; }
+
+    .app-shell { width: min(1080px, 100%); margin: 0 auto; padding: 26px 30px 38px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+    .topbar-actions { display: inline-flex; align-items: center; gap: 10px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; color: inherit; text-decoration: none; }
+    .theme-toggle { display: grid; width: 40px; height: 40px; flex: 0 0 40px; place-items: center; border: 1px solid var(--line); border-radius: 13px; color: var(--muted-text); background: var(--surface); cursor: pointer; transition: color .18s ease, background .18s ease, border-color .18s ease, transform .18s ease; }
+    .theme-toggle:hover { color: var(--purple); border-color: var(--purple); transform: translateY(-1px); }
+    .theme-toggle:focus-visible { outline: 3px solid var(--focus-glow); outline-offset: 2px; }
+    .theme-icon { width: 19px; height: 19px; }
+    /* 图标表示当前模式：自动 / 日间 / 夜间 */
+    .theme-icon { display: none; }
+    :root:not([data-theme-mode]) .theme-icon-auto,
+    :root[data-theme-mode="auto"] .theme-icon-auto,
+    :root[data-theme-mode="light"] .theme-icon-sun,
+    :root[data-theme-mode="dark"] .theme-icon-moon { display: block; }
+    .brand-mark {
+      display: grid; width: 43px; height: 43px; place-items: center;
+      border-radius: 15px; color: #fff; background: linear-gradient(145deg, #8276ed, #5a4dce);
+      box-shadow: 0 8px 18px rgba(101, 88, 217, .25);
+    }
+    .brand-mark svg { width: 23px; height: 23px; }
+    .brand-name { display: block; font-size: 15px; font-weight: 760; letter-spacing: .03em; }
+    .brand-caption { display: block; margin-top: -2px; color: var(--soft-text); font-size: 9px; font-weight: 700; letter-spacing: .16em; }
+    .research-pill { display: inline-flex; align-items: center; gap: 9px; padding: 8px 13px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted-text); background: color-mix(in srgb, var(--surface) 78%, transparent); font-size: 12px; white-space: nowrap; }
+    .research-pill .pill-dot { width: 7px; height: 7px; border-radius: 50%; background: #77b89e; box-shadow: 0 0 0 3px #e8f5ef; }
+
+    .hero { display: grid; grid-template-columns: 1.08fr .92fr; align-items: center; gap: 44px; padding: 57px 5px 43px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 15px; color: var(--purple); font-size: 12px; font-weight: 760; letter-spacing: .09em; }
+    .eyebrow-mark { display: inline-grid; width: 23px; height: 23px; place-items: center; border-radius: 8px; color: var(--eyebrow-ink); background: var(--eyebrow-bg); font-size: 14px; }
+    .hero h1 { margin: 0; font-size: clamp(36px, 5.2vw, 54px); line-height: 1.18; letter-spacing: -.055em; font-weight: 790; }
+    .hero h1 .accent { color: var(--purple); }
+    .hero-description { max-width: 470px; margin: 18px 0 19px; color: var(--muted-text); font-size: 15px; line-height: 1.9; }
+    .trust-row { display: flex; flex-wrap: wrap; gap: 18px; color: var(--muted-text); font-size: 12px; }
+    .trust-item { display: inline-flex; align-items: center; gap: 7px; }
+    .trust-item svg { width: 15px; height: 15px; color: #6eaa91; }
+
+    .chat-illustration {
+      position: relative; width: min(100%, 390px); min-height: 252px; margin: 0 auto;
+      padding: 22px 23px 18px; overflow: hidden; border: 1px solid var(--panel-border); border-radius: 24px;
+      background: color-mix(in srgb, var(--surface) 88%, transparent); box-shadow: var(--shadow); transform: rotate(1.2deg);
+    }
+    .chat-illustration::before { position: absolute; top: -65px; right: -34px; width: 170px; height: 170px; border-radius: 50%; background: var(--purple-soft); content: ""; }
+    .chat-top { position: relative; display: flex; align-items: center; gap: 10px; padding-bottom: 15px; border-bottom: 1px solid var(--divider); }
+    .chat-avatar { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 13px; color: white; background: linear-gradient(145deg,#8c80ef,#6558d9); font-size: 17px; }
+    .chat-person strong { display: block; font-size: 12px; }
+    .chat-person small { display: block; margin-top: 1px; color: var(--soft-text); font-size: 10px; }
+    .online-dot { width: 7px; height: 7px; margin-left: auto; border-radius: 50%; background: #79bd9d; box-shadow: 0 0 0 4px #ebf7f0; }
+    .chat-messages { position: relative; display: grid; gap: 10px; padding: 17px 0 15px; }
+    .bubble { max-width: 84%; padding: 10px 13px; border-radius: 13px; font-size: 11px; line-height: 1.6; }
+    .bubble.assistant { justify-self: start; color: var(--muted-text); background: var(--purple-soft); border-bottom-left-radius: 4px; }
+    .bubble.user { justify-self: end; color: white; background: #7064de; border-bottom-right-radius: 4px; }
+    .listening { display: inline-flex; align-items: center; gap: 7px; color: var(--soft-text); font-size: 10px; }
+    .listening-dots { display: inline-flex; gap: 3px; }
+    .listening-dots i { width: 4px; height: 4px; border-radius: 50%; background: #a69ee9; }
+    .chat-bottom { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--line); border-radius: 11px; color: var(--soft-text); font-size: 10px; }
+    .chat-bottom b { color: #7368db; font-size: 14px; }
+    .sparkle { position: absolute; z-index: 2; color: #9a90ed; font-size: 21px; }
+    .sparkle.one { top: 5px; right: 14px; }
+    .sparkle.two { bottom: 21px; left: -13px; color: #8cc9ad; font-size: 16px; }
+
+    .form-panel { max-width: 850px; margin: 0 auto; padding: 35px 43px 32px; border: 1px solid var(--panel-border); border-radius: 24px; background: var(--surface); box-shadow: var(--shadow); }
+    .form-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding-bottom: 21px; border-bottom: 1px solid var(--divider); }
+    .form-heading h2 { margin: 0; font-size: 20px; letter-spacing: -.025em; }
+    .form-heading p { margin: 5px 0 0; color: var(--soft-text); font-size: 12px; }
+    .progress-wrap { min-width: 190px; padding-bottom: 2px; }
+    .progress-copy { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 7px; color: var(--soft-text); font-size: 10px; }
+    .progress-copy strong { color: var(--muted-text); font-weight: 650; }
+    .progress-track { height: 5px; overflow: hidden; border-radius: 10px; background: var(--progress-track); }
+    .progress-fill { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #8d81ef, #6458d8); transition: width .25s ease; }
+
+    .question { min-width: 0; margin: 0; padding: 25px 0 23px; border: 0; }
+    .question + .question { padding-top: 25px; }
+    .question-heading { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 15px; }
+    .question-number { flex: 0 0 29px; display: grid; width: 29px; height: 29px; place-items: center; border-radius: 10px; color: var(--number-ink); background: var(--number-bg); font-size: 12px; font-weight: 750; }
+    .question-title { margin: 1px 0 4px; font-size: 14px; line-height: 1.6; font-weight: 720; }
+    .required-tag { display: inline-block; margin-left: 5px; color: var(--purple); font-size: 10px; font-weight: 600; }
+    .question-hint { margin: 0; color: var(--soft-text); font-size: 11px; }
+    .choices-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .option { position: relative; display: block; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .option-input { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; clip: rect(0, 0, 0, 0); }
+    .option-card { display: flex; min-height: 66px; align-items: center; gap: 11px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 13px; background: var(--option-surface); transition: border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease; }
+    .option:hover .option-card { border-color: var(--purple); transform: translateY(-1px); }
+    .option-input:focus-visible + .option-card { outline: 3px solid var(--focus-glow); outline-offset: 2px; }
+    .option-input:checked + .option-card { border-color: var(--purple); background: var(--option-selected); box-shadow: 0 0 0 2px var(--focus-glow); }
+    .option-icon { display: grid; flex: 0 0 34px; width: 34px; height: 34px; place-items: center; border-radius: 11px; color: var(--icon-purple-ink); background: var(--icon-purple-bg); font-size: 13px; font-weight: 760; }
+    .option-icon.mint { color: var(--icon-mint-ink); background: var(--icon-mint-bg); }
+    .option-icon.peach { color: var(--icon-peach-ink); background: var(--icon-peach-bg); }
+    .option-icon.blue { color: var(--icon-blue-ink); background: var(--icon-blue-bg); }
+    .option-copy { min-width: 0; flex: 1; }
+    .option-copy strong { display: block; font-size: 12px; font-weight: 660; line-height: 1.5; }
+    .option-copy small { display: block; margin-top: 2px; color: var(--soft-text); font-size: 10px; line-height: 1.4; }
+    /* 选中状态由卡片底色与边框呈现，勾号不再套灰色方框。 */
+    .check-mark { display: grid; flex: 0 0 18px; width: 18px; height: 18px; place-items: center; border: 0; color: transparent; font-size: 16px; font-weight: 800; line-height: 1; }
+    .option-input:checked + .option-card .check-mark { color: var(--purple); }
+
+    .conditional-field { margin: 11px 0 0 0; padding: 14px 15px; border: 1px solid var(--field-border); border-radius: 13px; background: var(--subtle-surface); }
+    .conditional-field label { display: block; margin-bottom: 7px; color: var(--muted-text); font-size: 11px; font-weight: 650; }
+    .text-input, .textarea { display: block; width: 100%; border: 1px solid var(--field-border); border-radius: 10px; outline: none; color: var(--ink); background: var(--field-bg); transition: border-color .18s ease, box-shadow .18s ease; }
+    .text-input { min-height: 42px; padding: 9px 12px; font-size: 12px; }
+    .textarea { min-height: 130px; padding: 13px 14px; resize: vertical; font-size: 12px; line-height: 1.75; }
+    .text-input::placeholder, .textarea::placeholder { color: var(--placeholder); }
+    .text-input:focus, .textarea:focus { border-color: var(--field-focus); box-shadow: 0 0 0 3px var(--focus-glow); }
+    .textarea-meta { display: flex; justify-content: space-between; gap: 10px; margin-top: 7px; color: var(--soft-text); font-size: 10px; }
+    .question-error { min-height: 0; margin: 7px 0 0; color: var(--error-ink); font-size: 11px; }
+    .question-error:empty { display: none; }
+    .input-error { margin-top: 5px; color: var(--error-ink); font-size: 10px; }
+
+    .submit-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-top: 20px; }
+    .submit-note { max-width: 365px; margin: 0; color: var(--soft-text); font-size: 10px; line-height: 1.65; }
+    .submit-button, .primary-button { display: inline-flex; min-height: 47px; align-items: center; justify-content: center; gap: 9px; padding: 0 22px; border: 0; border-radius: 12px; color: #fff; background: linear-gradient(135deg, #7569e2, #5b4fcf); box-shadow: 0 9px 20px rgba(101, 88, 217, .22); font-size: 12px; font-weight: 700; cursor: pointer; transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease; }
+    .submit-button:hover:not(:disabled), .primary-button:hover { transform: translateY(-1px); box-shadow: 0 12px 24px rgba(101, 88, 217, .28); }
+    .submit-button:focus-visible, .primary-button:focus-visible, .secondary-button:focus-visible, .text-button:focus-visible { outline: 3px solid rgba(101, 88, 217, .28); outline-offset: 3px; }
+    .submit-button:disabled { opacity: .68; cursor: wait; }
+    .submit-button svg { width: 15px; height: 15px; }
+    .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.45); border-top-color: white; border-radius: 50%; animation: spin .75s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .success-view { padding: 38px 0 7px; text-align: center; }
+    .success-icon { display: grid; width: 58px; height: 58px; margin: 0 auto 16px; place-items: center; border-radius: 20px; color: var(--success-ink); background: var(--success-bg); }
+    .success-icon svg { width: 27px; height: 27px; }
+    .success-view h3 { margin: 0; font-size: 21px; letter-spacing: -.03em; }
+    .success-copy { max-width: 480px; margin: 8px auto 20px; color: var(--muted-text); font-size: 12px; line-height: 1.8; }
+    .answer-summary { max-width: 520px; margin: 0 auto 22px; padding: 4px 17px; border: 1px solid var(--summary-border); border-radius: 14px; background: var(--summary-bg); text-align: left; }
+    .summary-row { display: grid; grid-template-columns: 90px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--summary-divider); font-size: 11px; }
+    .summary-row:last-child { border-bottom: 0; }
+    .summary-label { color: var(--summary-label); }
+    .summary-value { color: var(--summary-ink); overflow-wrap: anywhere; }
+    .success-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .primary-button, .secondary-button { min-height: 42px; padding: 0 17px; font-size: 11px; }
+    .secondary-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--secondary-border); border-radius: 11px; color: var(--secondary-ink); background: var(--secondary-bg); font-weight: 650; cursor: pointer; }
+    .secondary-button:hover { border-color: var(--purple); background: var(--option-selected); }
+
+    .storage-note { display: flex; align-items: flex-start; gap: 9px; max-width: 850px; margin: 15px auto 0; padding: 12px 15px; border: 1px solid var(--storage-border); border-radius: 12px; color: var(--storage-ink); background: var(--storage-bg); font-size: 10px; line-height: 1.65; }
+    .storage-note .shield { flex: 0 0 auto; color: var(--storage-icon); font-size: 13px; }
+    .storage-note p { margin: 0; }
+    .local-export { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 850px; margin: 9px auto 0; padding: 7px 2px; color: var(--soft-text); font-size: 10px; }
+    .text-button { padding: 4px 7px; border: 0; color: var(--purple); background: transparent; font-size: 10px; font-weight: 650; cursor: pointer; }
+    .page-footer { display: flex; justify-content: center; gap: 8px; margin: 24px 0 0; color: var(--footer-ink); font-size: 10px; }
+    .page-footer span + span::before { margin-right: 8px; color: var(--divider); content: "·"; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+    @media (max-width: 760px) {
+      .app-shell { padding: 20px 20px 30px; }
+      .hero { grid-template-columns: 1fr .75fr; gap: 18px; padding: 47px 0 35px; }
+      .hero h1 { font-size: clamp(33px, 6vw, 45px); }
+      .chat-illustration { min-height: 220px; padding: 17px; }
+      .form-panel { padding: 30px 30px 27px; }
+    }
+    @media (max-width: 590px) {
+      .app-shell { padding: 16px 14px 24px; }
+      .topbar { gap: 10px; }
+      .brand-mark { width: 39px; height: 39px; border-radius: 13px; }
+      .brand-name { font-size: 13px; }
+      .brand-caption { font-size: 8px; }
+      .research-pill { gap: 7px; padding: 7px 9px; font-size: 10px; }
+      .hero { display: block; padding: 41px 2px 28px; }
+      .hero h1 { font-size: clamp(36px, 10vw, 48px); }
+      .hero-description { margin: 14px 0 15px; font-size: 13px; }
+      .chat-illustration { display: none; }
+      .form-panel { padding: 24px 18px 22px; border-radius: 19px; }
+      .form-heading { display: block; padding-bottom: 17px; }
+      .form-heading h2 { font-size: 18px; }
+      .progress-wrap { margin-top: 16px; }
+      .question { padding: 21px 0 19px; }
+      .question-heading { gap: 9px; }
+      .question-title { font-size: 13px; }
+      .choices-grid { gap: 8px; }
+      .option-card { min-height: 64px; gap: 8px; padding: 9px 9px; }
+      .option-icon { flex-basis: 30px; width: 30px; height: 30px; border-radius: 9px; font-size: 12px; }
+      .option-copy strong { font-size: 11px; }
+      .option-copy small { font-size: 9px; }
+      .check-mark { flex-basis: 16px; width: 16px; height: 16px; font-size: 15px; }
+      .submit-row { align-items: stretch; flex-direction: column-reverse; gap: 12px; padding-top: 17px; }
+      .submit-button { width: 100%; }
+      .submit-note { max-width: none; text-align: center; }
+      .storage-note { margin-top: 11px; }
+      .local-export { align-items: flex-start; }
+    }
+    @media (max-width: 370px) {
+      .research-pill { max-width: 145px; white-space: normal; line-height: 1.35; }
+      .choices-grid { grid-template-columns: 1fr; }
+      .option-card { min-height: 59px; }
+      .summary-row { grid-template-columns: 72px 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+
+    /* 登录状态与兑换码 */
+    .session-bar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin: 14px 0 -6px; color: var(--soft-text); font-size: 11px; }
+    .session-bar strong { max-width: 220px; overflow: hidden; color: var(--ink); font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+    .session-bar .text-button { padding: 2px 6px; font-size: 10px; }
+    .gate-view { padding: 34px 0 12px; text-align: center; }
+    .gate-icon { display: grid; width: 58px; height: 58px; margin: 0 auto 16px; place-items: center; border-radius: 20px; color: var(--purple); background: var(--purple-soft); }
+    .gate-icon svg { width: 27px; height: 27px; }
+    .gate-view h3 { margin: 0; font-size: 21px; letter-spacing: -.03em; }
+    .gate-copy { max-width: 460px; margin: 8px auto 18px; color: var(--muted-text); font-size: 12px; line-height: 1.8; }
+    .login-button { display: inline-flex; min-height: 47px; align-items: center; justify-content: center; gap: 9px; padding: 0 24px; border-radius: 12px; color: #fff; background: linear-gradient(135deg, #7569e2, #5b4fcf); box-shadow: 0 9px 20px rgba(101, 88, 217, .22); font-size: 13px; font-weight: 700; text-decoration: none; transition: transform .18s ease, box-shadow .18s ease; }
+    .login-button:hover { transform: translateY(-1px); box-shadow: 0 12px 24px rgba(101, 88, 217, .28); }
+    .login-button:focus-visible { outline: 3px solid var(--focus-glow); outline-offset: 3px; }
+    .gate-hint { margin: 12px 0 0; color: var(--soft-text); font-size: 10px; line-height: 1.7; overflow-wrap: anywhere; }
+    .gate-hint:empty { display: none; }
+    .reward-box { max-width: 520px; margin: 0 auto 22px; padding: 16px 18px; border: 1px dashed var(--purple); border-radius: 14px; background: var(--option-selected); text-align: center; }
+    .reward-title { margin: 0 0 6px; color: var(--purple); font-size: 12px; font-weight: 720; letter-spacing: .05em; }
+    .reward-copy { margin: 0; color: var(--muted-text); font-size: 11px; line-height: 1.7; }
+    .reward-code-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; margin-top: 12px; }
+    .reward-code { padding: 9px 14px; border: 1px solid var(--purple); border-radius: 10px; color: var(--ink); background: var(--field-bg); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 16px; font-weight: 700; letter-spacing: .1em; overflow-wrap: anywhere; }
+    .reward-refresh { margin-top: 12px; }
+
+    /* 新增题目（模型偏好与付费意愿） */
+    .optional-tag { display: inline-block; margin-left: 5px; color: var(--soft-text); font-size: 10px; font-weight: 600; }
+    .chip-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { position: relative; display: inline-flex; }
+    .chip-input { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; clip: rect(0, 0, 0, 0); }
+    .chip-text { display: inline-flex; align-items: center; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted-text); background: var(--option-surface); font-size: 12px; font-weight: 600; cursor: pointer; transition: border-color .18s ease, color .18s ease, background .18s ease, box-shadow .18s ease; }
+    .chip:hover .chip-text { border-color: var(--purple); color: var(--ink); }
+    .chip-input:focus-visible + .chip-text { outline: 3px solid var(--focus-glow); outline-offset: 2px; }
+    .chip-input:checked + .chip-text { border-color: var(--purple); color: var(--purple); background: var(--option-selected); box-shadow: 0 0 0 2px var(--focus-glow); }
+    .price-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .price-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--option-surface); }
+    .price-row > span:first-child { flex: 1; min-width: 0; color: var(--muted-text); font-size: 12px; }
+    .price-row input { width: 96px; padding: 6px 9px; border: 1px solid var(--field-border); border-radius: 8px; color: var(--ink); background: var(--field-bg); font-size: 12px; text-align: right; }
+    .price-row input:focus { border-color: var(--field-focus); box-shadow: 0 0 0 3px var(--focus-glow); outline: none; }
+    .price-unit { flex: 0 0 auto; color: var(--soft-text); font-size: 10px; }
+    @media (max-width: 590px) { .price-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="对话观察室首页">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 6.8A3.8 3.8 0 0 1 8.8 3h7.4A3.8 3.8 0 0 1 20 6.8v5.4a3.8 3.8 0 0 1-3.8 3.8h-4.5l-4.1 3v-3.5A3.8 3.8 0 0 1 5 11.8V6.8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8.5h7M9 11.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </span>
+        <span><span class="brand-name">对话观察室</span><span class="brand-caption">CONVERSATION LAB</span></span>
+      </a>
+      <div class="topbar-actions">
+        <div class="research-pill"><span class="pill-dot" aria-hidden="true"></span>用户体验调研 <span aria-hidden="true">·</span> 约 2 分钟</div>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="主题：跟随系统，点击切换到日间模式" title="主题：跟随系统">
+          <svg class="theme-icon theme-icon-auto" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17Z" fill="currentColor"/></svg>
+
+          <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.3 15.6A8.8 8.8 0 0 1 8.4 3.7 8.9 8.9 0 1 0 20.3 15.6Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div>
+          <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">✦</span> 一份小小的用户调研</p>
+          <h1 id="hero-title">让对话应用<br>更懂<span class="accent">你的想法。</span></h1>
+          <p class="hero-description">你正在使用什么应用？又希望它能帮你做些什么？花两分钟告诉我们，真实的体验会让未来的对话工具变得更好。</p>
+          <div class="trust-row">
+            <span class="trust-item"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m5 10 3.1 3.1L15.5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.4"/></svg>不询问身份信息</span>
+            <span class="trust-item"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5 16 5v4.4c0 3.7-2.5 6.6-6 8.1-3.5-1.5-6-4.4-6-8.1V5l6-2.5Z" stroke="currentColor" stroke-width="1.4"/><path d="m7.3 9.9 1.8 1.8 3.7-3.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>自由填写请勿留敏感资料</span>
+          </div>
+        </div>
+        <div class="chat-illustration" aria-hidden="true">
+          <span class="sparkle one">✦</span><span class="sparkle two">✧</span>
+          <div class="chat-top">
+            <span class="chat-avatar">✧</span>
+            <span class="chat-person"><strong>对话小伙伴</strong><small>正在认真倾听</small></span>
+            <span class="online-dot"></span>
+          </div>
+          <div class="chat-messages">
+            <div class="bubble assistant">嗨！你期待的对话应用是什么样子？</div>
+            <div class="bubble user">希望它更懂我，也能帮上日常的忙。</div>
+            <div class="listening"><span class="listening-dots"><i></i><i></i><i></i></span> 每个想法都值得被听见</div>
+          </div>
+          <div class="chat-bottom"><span>写下你的想法……</span><b>↗</b></div>
+        </div>
+      </section>
+
+      <section class="form-panel" aria-labelledby="form-title">
+        <div class="form-heading">
+          <div><h2 id="form-title">告诉我们你的想法</h2><p>带 <span style="color:#9a79ce">*</span> 的问题为必填，其他内容可按喜好填写。</p></div>
+          <div class="progress-wrap" id="progressWrap" aria-label="必填问题完成进度" hidden>
+            <div class="progress-copy"><strong id="progressText">已完成 0 / 5 项必填</strong><span id="progressPercent">0%</span></div>
+            <div class="progress-track" role="progressbar" aria-label="必填问题完成进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progressFill"></div></div>
+          </div>
+        </div>
+
+        <div class="session-bar" id="sessionBar" hidden><span>已登录：<strong id="userChipName"></strong></span><button class="text-button" id="logoutButton" type="button">退出登录</button></div>
+
+        <section class="gate-view" id="gateView" aria-live="polite">
+          <div class="gate-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 10V7a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="4.5" y="10" width="15" height="10.6" rx="2.6" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="15.3" r="1.4" fill="currentColor"/></svg></div>
+          <h3 id="gateTitle">正在检查登录状态…</h3>
+          <p class="gate-copy" id="gateCopy">请稍候。</p>
+          <a class="login-button" id="loginButton" href="/api/auth/login" hidden>使用奶酪账号登录</a>
+          <p class="gate-hint" id="gateHint"></p>
+        </section>
+
+        <div id="formView" hidden>
+          <form id="surveyForm" novalidate>
+            <fieldset class="question" aria-describedby="appError">
+              <legend class="sr-only">请问您使用的对话应用是什么？</legend>
+              <div class="question-heading">
+                <span class="question-number">01</span>
+                <div><h3 class="question-title">请问您使用的对话应用是什么？<span class="required-tag">* 必填</span></h3><p class="question-hint">可多选，选择您正在使用的所有应用</p></div>
+              </div>
+              <div class="choices-grid" role="group" aria-label="您使用的对话应用，可多选">
+                <label class="option"><input class="option-input" type="checkbox" name="applications" value="tavern"><span class="option-card"><span class="option-icon peach">酒</span><span class="option-copy"><strong>酒馆</strong><small>角色扮演与自定义对话</small></span><span class="check-mark" aria-hidden="true">✓</span></span></label>
+                <label class="option"><input class="option-input" type="checkbox" name="applications" value="xiaoshouji"><span class="option-card"><span class="option-icon mint">小</span><span class="option-copy"><strong>小手机</strong><small>沉浸式 AI 对话体验</small></span><span class="check-mark" aria-hidden="true">✓</span></span></label>
+                <label class="option"><input class="option-input" type="checkbox" name="applications" value="open_source"><span class="option-card"><span class="option-icon">开</span><span class="option-copy"><strong>Operit 等开源应用</strong><small>可扩展、可自定义的工具</small></span><span class="check-mark" aria-hidden="true">✓</span></span></label>
+                <label class="option"><input class="option-input" type="checkbox" name="applications" value="chatbox"><span class="option-card"><span class="option-icon blue">聊</span><span class="option-copy"><strong>Chatbox 等对话应用</strong><small>日常聊天与 AI 助手</small></span><span class="check-mark" aria-hidden="true">✓</span></span></label>
+                <label class="option"><input class="option-input" type="checkbox" name="applications" value="other"><span class="option-card"><span class="option-icon mint">+</span><span class="option-copy"><strong>其他应用</strong><small>填写应用名称</small></span><span class="check-mark" aria-hidden="true">✓</span></span></label>
+              </div>
+              <div class="conditional-field" id="appOtherWrap" hidden>
+                <label for="appOther">请填写应用名称 <span class="required-tag">* 必填</span></label>
+                <input class="text-input" id="appOther" name="applicationOther" type="text" maxlength="80" placeholder="例如：应用名称">
+                <div class="input-error" id="appOtherError" aria-live="polite"></div>
+              </div>
+              <p class="question-error" id="appError" role="alert"></p>
+            </fieldset>
+
+            <fieldset class="question" aria-describedby="featuresError">
+              <legend class="sr-only">你期望对话应用拥有的功能有哪些？</legend>
+              <div class="question-heading">
+                <span class="question-number">02</span>
+                <div><h3 class="question-title">你期望对话应用拥有的功能有哪些？<span class="required-tag">* 必填</span></h3><p class="question-hint">可多选，至少选择一项</p></div>
+              </div>
+              <div class="choices-grid" role="group" aria-label="期待的对话应用功能">
+                <label class="option"><input class="option-input feature-input" type="checkbox" name="features" value="chat"><span class="option-card"><span class="option-icon blue">聊</span><span class="option-copy"><strong>单纯对话</strong><small>专注聊天与问答</small></span><span class="check-mark" aria-hidden="true">✓</span></span></label>
+                <label class="option"><input class="option-input feature-input" type="checkbox" name="features" value="cross_chat_memory"><span class="option-card"><span class="option-icon">记</span><span class="option-copy"><strong>跨对话记住上下文</strong><small>在不同聊天间延续记忆</small></span><span class="check-mark" aria-hidden="true">✓</span></span></label>
+                <label class="option"><input class="option-input feature-input" type="checkbox" name="features" value="life_services"><span class="option-card"><span class="option-icon peach">忙</span><span class="option-copy"><strong>帮忙点外卖等生活服务</strong><small>协助处理日常事务</small></span><span class="check-mark" aria-hidden="true">✓</span></span></label>
+                <label class="option"><input class="option-input feature-input" type="checkbox" name="features" value="other"><span class="option-card"><span class="option-icon mint">＋</span><span class="option-copy"><strong>其他想要的功能</strong><small>有新点子也欢迎写下来</small></span><span class="check-mark" aria-hidden="true">✓</span></span></label>
+              </div>
+              <div class="conditional-field" id="featureOtherWrap" hidden>
+                <label for="featureOther">还有哪些功能想法？ <span style="color:#a0a1b0;font-weight:500">选填</span></label>
+                <input class="text-input" id="featureOther" name="featureOther" type="text" maxlength="300" placeholder="简单描述你期待的功能">
+              </div>
+              <p class="question-error" id="featuresError" role="alert"></p>
+            </fieldset>
+
+            <fieldset class="question">
+              <legend class="sr-only">您使用的小手机有哪些你喜欢的功能？或您希望拥有的功能。</legend>
+              <div class="question-heading">
+                <span class="question-number">03</span>
+                <div><h3 class="question-title">您使用的小手机有哪些你喜欢的功能？或您希望拥有的功能。</h3><p class="question-hint">选填 · 任何细节、使用场景或建议都欢迎分享</p></div>
+              </div>
+              <label class="sr-only" for="wishlist">写下你喜欢的功能或希望拥有的功能</label>
+              <textarea class="textarea" id="wishlist" name="wishlist" maxlength="500" placeholder="例如：我喜欢它的角色卡和记忆功能；希望能更方便地整理长期记忆、切换模型，或者在聊天中完成一些日常任务……"></textarea>
+              <div class="textarea-meta"><span>请避免填写手机号、地址等个人敏感信息</span><span><span id="charCount">0</span> / 500</span></div>
+            </fieldset>
+
+            <fieldset class="question" aria-describedby="favoriteModelsError">
+              <legend class="sr-only">你最喜欢的模型（多选，最多3个）</legend>
+              <div class="question-heading">
+                <span class="question-number">04</span>
+                <div><h3 class="question-title">你最喜欢的模型<span class="optional-tag">选填</span></h3><p class="question-hint">多选，最多选择 3 个</p></div>
+              </div>
+              <div class="chip-grid" role="group" aria-label="你最喜欢的模型，最多选3个">
+                <label class="chip"><input class="chip-input" type="checkbox" name="favoriteModels" value="gemini"><span class="chip-text">Gemini</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="favoriteModels" value="claude"><span class="chip-text">Claude</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="favoriteModels" value="deepseek"><span class="chip-text">DeepSeek</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="favoriteModels" value="grok"><span class="chip-text">Grok</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="favoriteModels" value="kimi"><span class="chip-text">Kimi</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="favoriteModels" value="gpt"><span class="chip-text">GPT</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="favoriteModels" value="qwen"><span class="chip-text">Qwen</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="favoriteModels" value="mimo"><span class="chip-text">MiMo</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="favoriteModels" value="minimax"><span class="chip-text">MiniMax</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="favoriteModels" value="doubao"><span class="chip-text">豆包</span></label>
+              </div>
+              <p class="question-error" id="favoriteModelsError" role="alert"></p>
+            </fieldset>
+
+            <fieldset class="question" aria-describedby="jailbreakError">
+              <legend class="sr-only">你在聊天过程中会进行破甲吗？</legend>
+              <div class="question-heading">
+                <span class="question-number">05</span>
+                <div><h3 class="question-title">你在聊天过程中会进行破甲吗？<span class="required-tag">* 必填</span></h3><p class="question-hint">单选</p></div>
+              </div>
+              <div class="chip-grid" role="radiogroup" aria-label="破甲情况">
+                <label class="chip"><input class="chip-input" type="radio" name="jailbreak" value="must"><span class="chip-text">必须破甲</span></label>
+                <label class="chip"><input class="chip-input" type="radio" name="jailbreak" value="often"><span class="chip-text">经常破甲</span></label>
+                <label class="chip"><input class="chip-input" type="radio" name="jailbreak" value="sometimes"><span class="chip-text">偶尔破甲</span></label>
+                <label class="chip"><input class="chip-input" type="radio" name="jailbreak" value="never"><span class="chip-text">不破我玩清水</span></label>
+              </div>
+              <p class="question-error" id="jailbreakError" role="alert"></p>
+            </fieldset>
+
+            <fieldset class="question" aria-describedby="topUpError">
+              <legend class="sr-only">你认为一个付费站最低的起充额度是多少？</legend>
+              <div class="question-heading">
+                <span class="question-number">06</span>
+                <div><h3 class="question-title">你认为一个付费站最低的起充额度是多少？<span class="required-tag">* 必填</span></h3><p class="question-hint">单选</p></div>
+              </div>
+              <div class="chip-grid" role="radiogroup" aria-label="最低起充额度">
+                <label class="chip"><input class="chip-input" type="radio" name="minTopUp" value="1"><span class="chip-text">1 块</span></label>
+                <label class="chip"><input class="chip-input" type="radio" name="minTopUp" value="3"><span class="chip-text">3 块</span></label>
+                <label class="chip"><input class="chip-input" type="radio" name="minTopUp" value="5"><span class="chip-text">5 块</span></label>
+                <label class="chip"><input class="chip-input" type="radio" name="minTopUp" value="10"><span class="chip-text">10 块</span></label>
+              </div>
+              <p class="question-error" id="topUpError" role="alert"></p>
+            </fieldset>
+
+            <fieldset class="question" aria-describedby="reTopUpError">
+              <legend class="sr-only">若花光了第一次充值的额度，你第二次愿意充值多少？</legend>
+              <div class="question-heading">
+                <span class="question-number">07</span>
+                <div><h3 class="question-title">若花光了第一次充值的额度，你第二次愿意充值多少？<span class="required-tag">* 必填</span></h3><p class="question-hint">单选</p></div>
+              </div>
+              <div class="chip-grid" role="radiogroup" aria-label="第二次充值意愿">
+                <label class="chip"><input class="chip-input" type="radio" name="reTopUp" value="same"><span class="chip-text">和第一次一样</span></label>
+                <label class="chip"><input class="chip-input" type="radio" name="reTopUp" value="half"><span class="chip-text">第一次的一半</span></label>
+                <label class="chip"><input class="chip-input" type="radio" name="reTopUp" value="double"><span class="chip-text">第一次的二倍</span></label>
+              </div>
+              <p class="question-error" id="reTopUpError" role="alert"></p>
+            </fieldset>
+
+            <fieldset class="question">
+              <legend class="sr-only">你愿意为什么模型付费</legend>
+              <div class="question-heading">
+                <span class="question-number">08</span>
+                <div><h3 class="question-title">你愿意为什么模型付费<span class="optional-tag">选填</span></h3><p class="question-hint">多选</p></div>
+              </div>
+              <div class="chip-grid" role="group" aria-label="愿意付费的模型">
+                <label class="chip"><input class="chip-input" type="checkbox" name="payModels" value="gemini"><span class="chip-text">Gemini</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="payModels" value="claude"><span class="chip-text">Claude</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="payModels" value="deepseek"><span class="chip-text">DeepSeek</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="payModels" value="grok"><span class="chip-text">Grok</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="payModels" value="kimi"><span class="chip-text">Kimi</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="payModels" value="gpt"><span class="chip-text">GPT</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="payModels" value="qwen"><span class="chip-text">Qwen</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="payModels" value="mimo"><span class="chip-text">MiMo</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="payModels" value="minimax"><span class="chip-text">MiniMax</span></label>
+                <label class="chip"><input class="chip-input" type="checkbox" name="payModels" value="doubao"><span class="chip-text">豆包</span></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="question" aria-describedby="pricesError">
+              <legend class="sr-only">你所使用的模型价格是多少？</legend>
+              <div class="question-heading">
+                <span class="question-number">09</span>
+                <div><h3 class="question-title">你所使用的模型价格是多少？<span class="optional-tag">选填</span></h3><p class="question-hint">单位：元/次；任填至少一项即可，填几项都可以</p></div>
+              </div>
+              <div class="price-grid">
+                <label class="price-row"><span>Gemini</span><input class="price-input" type="number" min="0" max="99999" step="0.01" inputmode="decimal" data-model="gemini"><span class="price-unit">元/次</span></label>
+                <label class="price-row"><span>Claude</span><input class="price-input" type="number" min="0" max="99999" step="0.01" inputmode="decimal" data-model="claude"><span class="price-unit">元/次</span></label>
+                <label class="price-row"><span>DeepSeek</span><input class="price-input" type="number" min="0" max="99999" step="0.01" inputmode="decimal" data-model="deepseek"><span class="price-unit">元/次</span></label>
+                <label class="price-row"><span>Grok</span><input class="price-input" type="number" min="0" max="99999" step="0.01" inputmode="decimal" data-model="grok"><span class="price-unit">元/次</span></label>
+                <label class="price-row"><span>Kimi</span><input class="price-input" type="number" min="0" max="99999" step="0.01" inputmode="decimal" data-model="kimi"><span class="price-unit">元/次</span></label>
+                <label class="price-row"><span>GPT</span><input class="price-input" type="number" min="0" max="99999" step="0.01" inputmode="decimal" data-model="gpt"><span class="price-unit">元/次</span></label>
+                <label class="price-row"><span>Qwen</span><input class="price-input" type="number" min="0" max="99999" step="0.01" inputmode="decimal" data-model="qwen"><span class="price-unit">元/次</span></label>
+                <label class="price-row"><span>MiMo</span><input class="price-input" type="number" min="0" max="99999" step="0.01" inputmode="decimal" data-model="mimo"><span class="price-unit">元/次</span></label>
+                <label class="price-row"><span>MiniMax</span><input class="price-input" type="number" min="0" max="99999" step="0.01" inputmode="decimal" data-model="minimax"><span class="price-unit">元/次</span></label>
+                <label class="price-row"><span>豆包</span><input class="price-input" type="number" min="0" max="99999" step="0.01" inputmode="decimal" data-model="doubao"><span class="price-unit">元/次</span></label>
+              </div>
+              <p class="question-error" id="pricesError" role="alert"></p>
+            </fieldset>
+
+            <div class="submit-row">
+              <p class="submit-note">提交即表示你同意将这份回答用于对话应用体验调研。请勿填写可识别个人身份的信息。</p>
+              <button class="submit-button" id="submitButton" type="submit">
+                <span>提交我的回答</span>
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3.5 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <section class="success-view" id="successView" aria-live="polite" hidden>
+          <div class="success-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 12.5 4.4 4.2L19 7.5" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>感谢你的分享！</h3>
+          <p class="success-copy" id="successMessage">你的回答已收到。每一条真实反馈，都会帮助我们更好地理解大家的需要。</p>
+          <div class="answer-summary" id="answerSummary"></div>
+          <div class="reward-box" id="rewardBox" hidden>
+            <p class="reward-title">◈ 完成奖励</p>
+            <p class="reward-copy" id="rewardCopy">正在查询兑换码…</p>
+            <div class="reward-code-row" id="rewardCodeRow" hidden>
+              <code class="reward-code" id="rewardCode"></code>
+              <button class="secondary-button" id="copyReward" type="button">复制兑换码</button>
+            </div>
+            <div><button class="text-button reward-refresh" id="refreshReward" type="button" hidden>刷新兑换码</button></div>
+          </div>
+          <div class="success-actions">
+            <button class="primary-button" id="downloadCurrent" type="button">下载本份答卷</button>
+          </div>
+        </section>
+      </section>
+
+      <div class="storage-note" role="status"><span class="shield" aria-hidden="true">◈</span><p id="storageNoticeText">本调研需登录后填写；提交的答卷会集中保存，用于调研统计。</p></div>
+      <div class="local-export" id="localExportGroup" hidden><span id="localCount">本机已保存 0 份</span><button class="text-button" id="exportAll" type="button">导出本机答卷 JSON</button></div>
+    </main>
+    <footer class="page-footer"><span>对话观察室</span><span>感谢你让更好的对话成为可能</span></footer>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+      const STORAGE_KEY = 'conversation-lab-survey-responses-v1';
+      const APPLICATION_LABELS = {tavern:'酒馆',xiaoshouji:'小手机',open_source:'Operit 等开源应用',chatbox:'Chatbox 等对话应用',other:'其他应用'};
+      const FEATURE_LABELS = {chat:'单纯对话',cross_chat_memory:'跨对话记住上下文',life_services:'帮忙点外卖等生活服务',other:'其他想要的功能'};
+      const MODEL_LABELS={gemini:'Gemini',claude:'Claude',deepseek:'DeepSeek',grok:'Grok',kimi:'Kimi',gpt:'GPT',qwen:'Qwen',mimo:'MiMo',minimax:'MiniMax',doubao:'豆包'};
+      const JAILBREAK_LABELS={must:'必须破甲',often:'经常破甲',sometimes:'偶尔破甲',never:'不破我玩清水'};
+      const TOPUP_LABELS={'1':'1块','3':'3块','5':'5块','10':'10块'};
+      const RETOPUP_LABELS={same:'和第一次一样',half:'第一次的一半',double:'第一次的二倍'};
+      const favoriteModelsError=document.getElementById('favoriteModelsError'),jailbreakError=document.getElementById('jailbreakError'),topUpError=document.getElementById('topUpError'),reTopUpError=document.getElementById('reTopUpError'),pricesError=document.getElementById('pricesError');
+      function selectedModels(name){return [...form.querySelectorAll('input[name="'+name+'"]:checked')].map(x=>x.value)}
+      const form=document.getElementById('surveyForm'), formView=document.getElementById('formView'), successView=document.getElementById('successView');
+      const appOtherWrap=document.getElementById('appOtherWrap'), appOther=document.getElementById('appOther');
+      const featureOtherWrap=document.getElementById('featureOtherWrap'), featureOther=document.getElementById('featureOther');
+      const appError=document.getElementById('appError'), appOtherError=document.getElementById('appOtherError'), featuresError=document.getElementById('featuresError');
+      const submitButton=document.getElementById('submitButton'), storageNoticeText=document.getElementById('storageNoticeText');
+      const themeToggle=document.getElementById('themeToggle'), themeColorMeta=document.getElementById('themeColorMeta');
+      const THEME_STORAGE_KEY='conversation-lab-survey-theme-v1';
+      // 点击按钮循环：跟随系统 → 日间 → 夜间 → 跟随系统
+      const THEME_ORDER=['auto','light','dark'], THEME_NAMES={auto:'跟随系统',light:'日间模式',dark:'夜间模式'};
+      const systemDarkQuery=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
+      function applyTheme(mode, persist=true){
+        const m=THEME_ORDER.includes(mode)?mode:'auto';
+        const resolved=m==='auto'?(systemDarkQuery&&systemDarkQuery.matches?'dark':'light'):m;
+        const root=document.documentElement;
+        root.dataset.themeMode=m;root.dataset.theme=resolved;
+        const nextMode=THEME_ORDER[(THEME_ORDER.indexOf(m)+1)%THEME_ORDER.length];
+        themeToggle.setAttribute('aria-label',`主题：${THEME_NAMES[m]}，点击切换到${THEME_NAMES[nextMode]}`);
+        themeToggle.setAttribute('title',`主题：${THEME_NAMES[m]}`);
+        themeColorMeta.setAttribute('content',resolved==='dark'?'#12121b':'#f7f7fc');
+        if(persist){try{localStorage.setItem(THEME_STORAGE_KEY,m)}catch(_){}}
+      }
+      themeToggle.addEventListener('click',()=>{const cur=document.documentElement.dataset.themeMode||'auto';applyTheme(THEME_ORDER[(THEME_ORDER.indexOf(cur)+1)%THEME_ORDER.length])});
+      // 跟随系统模式下，系统切换深浅色时页面实时更新
+      if(systemDarkQuery){const onSystemChange=()=>{if((document.documentElement.dataset.themeMode||'auto')==='auto')applyTheme('auto',false)};if(systemDarkQuery.addEventListener)systemDarkQuery.addEventListener('change',onSystemChange);else if(systemDarkQuery.addListener)systemDarkQuery.addListener(onSystemChange)}
+      applyTheme(document.documentElement.dataset.themeMode||'auto',false);
+      let lastResponse=null;
+      function getLocalResponses(){try{const rows=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');return Array.isArray(rows)?rows:[]}catch(_){return[]}}
+      function refreshLocalExport(){const rows=getLocalResponses();document.getElementById('localExportGroup').hidden=rows.length===0;document.getElementById('localCount').textContent=`本机已保存 ${rows.length} 份`}
+      function selectedApps(){return [...form.querySelectorAll('input[name="applications"]:checked')].map(x=>x.value)}
+      function selectedFeatures(){return [...form.querySelectorAll('input[name="features"]:checked')].map(x=>x.value)}
+      function updateConditionalFields(){const otherApp=selectedApps().includes('other');appOtherWrap.hidden=!otherApp;appOther.required=otherApp;if(!otherApp){appOther.value='';appOtherError.textContent=''}const otherFeature=selectedFeatures().includes('other');featureOtherWrap.hidden=!otherFeature;if(!otherFeature)featureOther.value='';updateProgress()}
+      function updateProgress(){const done=Number(selectedApps().length>0)+Number(selectedFeatures().length>0)+Number(!!form.querySelector('input[name="jailbreak"]:checked'))+Number(!!form.querySelector('input[name="minTopUp"]:checked'))+Number(!!form.querySelector('input[name="reTopUp"]:checked')),percent=Math.round(done/5*100);document.getElementById('progressText').textContent=`已完成 ${done} / 5 项必填`;document.getElementById('progressPercent').textContent=`${percent}%`;document.getElementById('progressFill').style.width=`${percent}%`;document.querySelector('[role="progressbar"]').setAttribute('aria-valuenow',String(percent))}
+      form.addEventListener('change',e=>{const target=e.target;if(target.matches('input[name="applications"], input[name="features"]'))updateConditionalFields();if(target.matches('input[name="applications"]'))appError.textContent='';if(target.matches('input[name="features"]')&&selectedFeatures().length)featuresError.textContent='';if(target.matches('input[name="favoriteModels"]')){if(selectedModels('favoriteModels').length>3){target.checked=false;favoriteModelsError.textContent='最多选择3个模型。'}else{favoriteModelsError.textContent=''}}if(target.matches('input[name="jailbreak"]'))jailbreakError.textContent='';if(target.matches('input[name="minTopUp"]'))topUpError.textContent='';if(target.matches('input[name="reTopUp"]'))reTopUpError.textContent='';updateProgress()})
+      form.addEventListener('input',e=>{if(e.target.matches('.price-input'))pricesError.textContent=''})
+      appOther.addEventListener('input',()=>{appOtherError.textContent=''})
+      document.getElementById('wishlist').addEventListener('input',e=>{document.getElementById('charCount').textContent=String(e.target.value.length)})
+      function validateForm(){appError.textContent='';appOtherError.textContent='';featuresError.textContent='';favoriteModelsError.textContent='';jailbreakError.textContent='';topUpError.textContent='';reTopUpError.textContent='';pricesError.textContent='';const apps=selectedApps();if(!apps.length){appError.textContent='请选择至少一款您正在使用的对话应用。';form.querySelector('input[name="applications"]')?.focus();return false}if(apps.includes('other')&&!appOther.value.trim()){appOtherError.textContent='请填写其他应用的名称。';appOther.focus();return false}if(!selectedFeatures().length){featuresError.textContent='请至少选择一项期待的功能。';form.querySelector('input[name="features"]')?.focus();return false}if(selectedModels('favoriteModels').length>3){favoriteModelsError.textContent='最多选择3个模型。';return false}if(!form.querySelector('input[name="jailbreak"]:checked')){jailbreakError.textContent='请选择你在聊天过程中的破甲情况。';form.querySelector('input[name="jailbreak"]')?.focus();return false}if(!form.querySelector('input[name="minTopUp"]:checked')){topUpError.textContent='请选择你认为的最低起充额度。';form.querySelector('input[name="minTopUp"]')?.focus();return false}if(!form.querySelector('input[name="reTopUp"]:checked')){reTopUpError.textContent='请选择你第二次愿意充值的额度。';form.querySelector('input[name="reTopUp"]')?.focus();return false}for(const input of form.querySelectorAll('.price-input')){const value=(input.value||'').trim();if(value&&(!/^\d+(\.\d{1,2})?$/.test(value)||Number(value)>99999)){pricesError.textContent='价格请填写数字（元/次，最多两位小数，不超过99999）。';input.focus();return false}}return true}
+      function buildResponse(){const applications=selectedApps(),features=selectedFeatures(),favoriteModels=selectedModels('favoriteModels'),payModels=selectedModels('payModels'),modelPrices={},checkedRadio=(name)=>{const el=form.querySelector('input[name="'+name+'"]:checked');return el?el.value:''};for(const input of form.querySelectorAll('.price-input')){const value=(input.value||'').trim();if(value)modelPrices[input.dataset.model]=value}return{applications,application:applications[0],applicationOther:applications.includes('other')?appOther.value.trim():'',features,featureOther:features.includes('other')?featureOther.value.trim():'',wishlist:document.getElementById('wishlist').value.trim(),favoriteModels,jailbreak:checkedRadio('jailbreak'),minTopUp:checkedRadio('minTopUp'),reTopUp:checkedRadio('reTopUp'),payModels,modelPrices,submittedAt:new Date().toISOString()}}
+      function saveLocally(response){try{const rows=getLocalResponses();rows.push(response);localStorage.setItem(STORAGE_KEY,JSON.stringify(rows));refreshLocalExport();return true}catch(_){return false}}
+      function downloadJSON(data,filename){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();window.setTimeout(()=>URL.revokeObjectURL(url),1000)}
+      function dateStamp(){return new Date().toISOString().replace(/[:.]/g,'-')}
+      function renderSummary(response){const summary=document.getElementById('answerSummary');summary.replaceChildren();const applications=response.applications||[response.application],appName=applications.map(x=>x==='other'?`其他应用：${response.applicationOther}`:(APPLICATION_LABELS[x]||x)).join('、'),featureNames=response.features.map(x=>FEATURE_LABELS[x]||x);if(response.featureOther)featureNames.push(response.featureOther);const favoriteNames=(response.favoriteModels||[]).map(x=>MODEL_LABELS[x]||x),payNames=(response.payModels||[]).map(x=>MODEL_LABELS[x]||x),priceEntries=Object.entries(response.modelPrices||{}).map(([k,v])=>`${MODEL_LABELS[k]||k} ${v}元/次`);for(const[label,value]of[['使用的应用',appName],['期待的功能',featureNames.join('、')],['补充想法',response.wishlist||'未填写'],['最喜欢的模型',favoriteNames.join('、')||'未填写'],['破甲情况',JAILBREAK_LABELS[response.jailbreak]||'未填写'],['最低起充',TOPUP_LABELS[response.minTopUp]||'未填写'],['二次充值',RETOPUP_LABELS[response.reTopUp]||'未填写'],['愿付费模型',payNames.join('、')||'未填写'],['模型价格',priceEntries.join('、')||'未填写']]){const row=document.createElement('div'),a=document.createElement('span'),b=document.createElement('span');row.className='summary-row';a.className='summary-label';a.textContent=label;b.className='summary-value';b.textContent=value;row.append(a,b);summary.appendChild(row)}}
+      async function submitToWorker(response){const controller=new AbortController(),timer=window.setTimeout(()=>controller.abort(),15000);let result;try{result=await fetch('/api/responses',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(response),credentials:'same-origin',signal:controller.signal})}catch(error){const timeout=error&&error.name==='AbortError',err=new Error(timeout?'提交超时，请检查网络后重试。':'网络异常，提交失败，请稍后重试。');err.code=timeout?'TIMEOUT':'NETWORK';throw err}finally{window.clearTimeout(timer)}const type=result.headers.get('content-type')||'';let data=null;if(type.includes('application/json')){try{data=await result.json()}catch(_){data=null}}if(result.status===401){const err=new Error((data&&data.error)||'请先登录后再提交。');err.code='UNAUTHORIZED';throw err}if(result.status===409){const err=new Error((data&&data.error)||'你已提交过答卷。');err.code='ALREADY_SUBMITTED';throw err}if(result.ok){if(data&&data.ok)return data;throw new Error((data&&data.error)||'提交失败，请稍后再试。')}if(result.status===404||result.status===405||!type.includes('application/json'))throw new Error('无法连接调研服务器，请稍后重试。');throw new Error((data&&data.error)||'提交失败，请稍后再试。')}
+      form.addEventListener('submit',async e=>{e.preventDefault();if(!validateForm())return;const response=buildResponse();submitButton.disabled=true;submitButton.innerHTML='<span class="spinner" aria-hidden="true"></span><span>正在提交…</span>';try{const result=await submitToWorker(response);lastResponse=response;renderSummary(response);storageNoticeText.textContent='提交成功：答卷已保存到调研数据库。请勿在自由填写中写入个人敏感资料。';document.getElementById('successMessage').textContent='你的回答已成功提交。每一条真实反馈，都会帮助我们更好地理解大家的需要。';showSuccessView(true,result&&result.rewardCode?result.rewardCode:null)}catch(error){if(error&&error.code==='UNAUTHORIZED'){storageNoticeText.textContent='登录已失效，请重新登录后再提交。';showGate('login');return}if(error&&error.code==='ALREADY_SUBMITTED'){storageNoticeText.textContent='你已经完成过本次调研，正在加载你的记录…';await initAuth();return}const message=error instanceof Error?error.message:'提交失败，请稍后再试。';storageNoticeText.textContent=`提交未成功：${message}`;featuresError.textContent=message}finally{submitButton.disabled=false;submitButton.innerHTML='<span>提交我的回答</span><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3.5 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'}})
+      document.getElementById('downloadCurrent').addEventListener('click',()=>{if(lastResponse)downloadJSON(lastResponse,`对话应用调研答卷-${dateStamp()}.json`)});
+      document.getElementById('exportAll').addEventListener('click',()=>{const rows=getLocalResponses();if(rows.length)downloadJSON({survey:'对话应用体验调研',exportedAt:new Date().toISOString(),responses:rows},`本机调研答卷-${dateStamp()}.json`)});
+      // ---- 登录会话 / 兑换码 ----
+      const sessionBar=document.getElementById('sessionBar'),sessionName=document.getElementById('userChipName'),gateView=document.getElementById('gateView'),gateTitle=document.getElementById('gateTitle'),gateCopy=document.getElementById('gateCopy'),gateHint=document.getElementById('gateHint'),loginButton=document.getElementById('loginButton'),progressWrap=document.getElementById('progressWrap'),rewardBox=document.getElementById('rewardBox'),rewardCopy=document.getElementById('rewardCopy'),rewardCodeRow=document.getElementById('rewardCodeRow'),rewardCode=document.getElementById('rewardCode'),refreshRewardButton=document.getElementById('refreshReward'),copyRewardButton=document.getElementById('copyReward');
+      const LOGIN_ERRORS={unconfigured:'登录功能尚未配置完成：管理员需要先填写 OAuth 客户端与会话密钥。',denied:'你取消了账号授权。如需继续，请重新登录。',state:'登录校验已过期或失败，请重新登录。',token:'登录换取令牌失败，请稍后重试。',nonce:'登录校验失败，请重试。',userinfo:'获取账号信息失败，请稍后重试。',profile:'账号信息不完整，请稍后重试。'};
+      let currentUser=null;
+      function showGate(state,detail){formView.hidden=true;successView.hidden=true;progressWrap.hidden=true;sessionBar.hidden=true;gateView.hidden=false;if(state==='checking'){gateTitle.textContent='正在检查登录状态…';gateCopy.textContent='请稍候。';gateHint.textContent='';loginButton.hidden=true}else if(state==='login'){gateTitle.textContent='登录后参与调研';gateCopy.textContent='为了保障一人一份、方便发放兑换码，请先用奶酪账号登录，登录成功后再填写问卷。';gateHint.textContent='登录仅用于确认身份与发放兑换码，不会读取聊天内容。';loginButton.hidden=false;loginButton.textContent='使用奶酪账号登录'}else if(state==='unconfigured'){gateTitle.textContent='登录功能尚未配置';gateCopy.textContent='管理员还没有完成登录服务的配置，暂时无法填写问卷。';gateHint.textContent=detail||'';loginButton.hidden=true}else if(state==='offline'){gateTitle.textContent='无法连接服务器';gateCopy.textContent='当前页面没有连接到调研服务器，请从部署后的网址访问。';gateHint.textContent=detail||'';loginButton.hidden=true}else{gateTitle.textContent='登录出现问题';gateCopy.textContent=LOGIN_ERRORS[detail]||'登录未完成，请重试。';gateHint.textContent='';loginButton.hidden=false;loginButton.textContent='重新登录'}}
+      function showFormView(){gateView.hidden=true;successView.hidden=true;formView.hidden=false;progressWrap.hidden=false;updateProgress();if(currentUser){sessionBar.hidden=false;sessionName.textContent=currentUser.name}}
+      function showRewardCode(code){rewardBox.hidden=false;rewardCode.textContent=code;rewardCodeRow.hidden=false;refreshRewardButton.hidden=false;rewardCopy.textContent='兑换码已发放，请妥善保存；也可以稍后回到本页面再次查看。'}
+      function showSuccessView(scroll,knownCode){gateView.hidden=true;formView.hidden=true;progressWrap.hidden=true;successView.hidden=false;if(currentUser){sessionBar.hidden=false;sessionName.textContent=currentUser.name}if(knownCode){showRewardCode(knownCode)}else{refreshReward()}if(scroll){successView.scrollIntoView({behavior:'smooth',block:'center'})}}
+      async function refreshReward(){rewardBox.hidden=false;rewardCodeRow.hidden=true;refreshRewardButton.hidden=true;rewardCode.textContent='';rewardCopy.textContent='正在查询兑换码…';try{const res=await fetch('/api/reward',{credentials:'same-origin'}),data=await res.json().catch(()=>null);if(res.status===401){rewardCopy.textContent='请重新登录后领取兑换码。';return}if(!res.ok||!data||!data.ok){rewardCopy.textContent=(data&&data.error)||'兑换码查询失败，请稍后重试。';refreshRewardButton.hidden=false;return}if(data.code){showRewardCode(data.code)}else{rewardCopy.textContent='兑换码还没有开始发放：管理员放入兑换码后，点击下方按钮即可领取。';refreshRewardButton.hidden=false}}catch(_){rewardCopy.textContent='兑换码查询失败，请检查网络后重试。';refreshRewardButton.hidden=false}}
+      function consumeLoginQuery(){const params=new URLSearchParams(location.search),state=params.get('login'),reason=params.get('reason')||'';if(state){try{history.replaceState(null,'',location.pathname+(location.hash||''))}catch(_){}}return{state,reason}}
+      async function initAuth(){const loginQuery=consumeLoginQuery();showGate('checking');sessionBar.hidden=true;let data=null;try{const res=await fetch('/api/auth/me',{credentials:'same-origin'});data=await res.json().catch(()=>null);if(!res.ok||!data||!data.ok)throw new Error('bad response')}catch(_){showGate('offline','');return}if(!data.configured){showGate('unconfigured','缺少配置：'+((data.missing||[]).join('、')||'未说明'));return}if(!data.authenticated){showGate(loginQuery.state==='error'?'error':'login',loginQuery.reason);return}currentUser=data.user||null;if(data.submission){lastResponse=data.submission;renderSummary(data.submission);document.getElementById('successMessage').textContent='你已经完成过本次调研，以下是你的回答记录。';storageNoticeText.textContent='每个账号仅可提交一次；答卷已保存用于调研统计。';showSuccessView(false)}else{showFormView()}}
+      loginButton.addEventListener('click',()=>{loginButton.hidden=true;gateCopy.textContent='正在跳转到登录页面…'});
+      document.getElementById('logoutButton').addEventListener('click',async()=>{try{await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin'})}catch(_){}location.reload()});
+      refreshRewardButton.addEventListener('click',()=>{refreshReward()});
+      copyRewardButton.addEventListener('click',async()=>{const text=rewardCode.textContent||'';if(!text)return;let done=false;try{await navigator.clipboard.writeText(text);done=true}catch(_){try{const area=document.createElement('textarea');area.value=text;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();document.execCommand('copy');area.remove();done=true}catch(_){}}copyRewardButton.textContent=done?'已复制':'复制失败，请长按兑换码手动复制';window.setTimeout(()=>{copyRewardButton.textContent='复制兑换码'},1600)});
+      initAuth();
+      refreshLocalExport();updateProgress();
+    })();
+  </script>
+</body>
+</html>

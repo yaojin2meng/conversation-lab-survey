@@ -1,0 +1,15 @@
+{
+  "name": "conversation-lab-survey",
+  "version": "1.0.0",
+  "private": true,
+  "description": "对话应用体验调研（Cloudflare Workers + D1，含 OAuth 登录与兑换码发放）",
+  "scripts": {
+    "dev": "wrangler dev --env dev",
+    "deploy": "wrangler deploy --env=\"\"",
+    "migrate:local": "wrangler d1 migrations apply sjb --local --env dev",
+    "migrate:remote": "wrangler d1 migrations apply sjb --remote"
+  },
+  "devDependencies": {
+    "wrangler": "^4.147.0"
+  }
+}
