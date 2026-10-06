@@ -24,8 +24,6 @@ const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 const OAUTH_STATE_TTL_SECONDS = 10 * 60;
 const OAUTH_TIMEOUT_MS = 10 * 1000;
 
-const ADMIN_COOKIE = "cl_admin";
-const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 const MAX_ADMIN_BATCH = 200;
 const MAX_PRICE_LENGTH = 12;
 const CODE_PATTERN = /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]{3,64}$/;
@@ -250,16 +248,24 @@ function safeJsonObject(value) {
   }
 }
 
-function timingSafeEqual(a, b) {
-  if (typeof a !== "string" || typeof b !== "string") return false;
-  const aBytes = new TextEncoder().encode(a);
-  const bBytes = new TextEncoder().encode(b);
-  if (aBytes.length !== bBytes.length) return false;
-  let difference = 0;
-  for (let index = 0; index < aBytes.length; index += 1) {
-    difference |= aBytes[index] ^ bBytes[index];
-  }
-  return difference === 0;
+function getAdminNames(env) {
+  const raw = typeof env.ADMIN_USERNAMES === "string" && !isPlaceholder(env.ADMIN_USERNAMES)
+    ? env.ADMIN_USERNAMES.trim()
+    : "nailao";
+  return raw.split(/[\s,，;；]+/).map((name) => name.trim().toLowerCase()).filter(Boolean);
+}
+
+function isAdminUser(env, user) {
+  if (!user) return false;
+  const name = typeof user.name === "string" ? user.name.trim().toLowerCase() : "";
+  return Boolean(name) && getAdminNames(env).includes(name);
+}
+
+function sanitizeNext(value) {
+  if (typeof value !== "string") return "/";
+  const next = value.trim();
+  if (!next.startsWith("/") || next.startsWith("//") || next.includes("\\") || next.length > 200) return "/";
+  return next;
 }
 
 function parseModelList(value, maxCount) {
@@ -511,10 +517,12 @@ async function handleAuthLogin(request, env) {
   const verifier = randomToken(32);
   const challenge = await sha256Base64Url(verifier);
   const redirectUri = new URL("/api/auth/callback", request.url).toString();
+  const next = sanitizeNext(new URL(request.url).searchParams.get("next"));
   const stateToken = await signToken(config.sessionSecret, {
     state,
     nonce,
     verifier,
+    next,
     exp: Math.floor(Date.now() / 1000) + OAUTH_STATE_TTL_SECONDS,
   });
   const authorize = new URL("/oauth2/authorize", config.issuer);
@@ -625,7 +633,8 @@ async function handleAuthCallback(request, env) {
   headers.append("Set-Cookie", buildCookie(SESSION_COOKIE, sessionToken, { maxAge: SESSION_TTL_SECONDS }));
   headers.append("Set-Cookie", clearCookie(OAUTH_COOKIE));
   headers.set("Cache-Control", "no-store");
-  headers.set("Location", "/?login=ok");
+  const target = sanitizeNext(stateToken.next);
+  headers.set("Location", `${target}${target.includes("?") ? "&" : "?"}login=ok`);
   return new Response(null, { status: 302, headers });
 }
 
@@ -665,6 +674,7 @@ async function handleAuthMe(request, env) {
     configured: config.ready,
     missing: config.ready ? [] : config.missing,
     authenticated: Boolean(user),
+    admin: Boolean(user && isAdminUser(env, user)),
     user: user ? { name: user.name } : null,
     submission,
   });
@@ -700,56 +710,15 @@ async function handleReward(request, env) {
   }
 }
 
-async function getAdminSession(request, env) {
-  const config = getOauthConfig(env);
-  if (!config.sessionSecret) return null;
-  const token = parseCookies(request).get(ADMIN_COOKIE);
-  if (!token) return null;
-  const payload = await verifyToken(config.sessionSecret, token);
-  if (!payload || payload.role !== "admin") return null;
-  const now = Math.floor(Date.now() / 1000);
-  if (typeof payload.exp !== "number" || payload.exp < now) return null;
-  return { role: "admin" };
-}
-
-async function handleAdminLogin(request, env) {
-  if (isPlaceholder(env.ADMIN_TOKEN)) {
-    return json({ ok: false, error: "后台尚未配置 ADMIN_TOKEN。" }, 503);
-  }
-  const config = getOauthConfig(env);
-  if (!config.sessionSecret) {
-    return json({ ok: false, error: "会话密钥尚未配置。" }, 503);
-  }
-  if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") {
-    return json({ ok: false, error: "请以 JSON 格式提交。" }, 415);
-  }
-  const body = await readBody(request);
-  if (!body || typeof body !== "object" || Array.isArray(body)) {
-    return json({ ok: false, error: "请求格式无效。" }, 400);
-  }
-  const token = typeof body.token === "string" ? body.token.trim() : "";
-  if (!timingSafeEqual(token, env.ADMIN_TOKEN.trim())) {
-    return json({ ok: false, error: "管理口令不正确。" }, 401);
-  }
-  const now = Math.floor(Date.now() / 1000);
-  const adminToken = await signToken(config.sessionSecret, {
-    role: "admin",
-    iat: now,
-    exp: now + ADMIN_SESSION_TTL_SECONDS,
-  });
-  return json({ ok: true }, 200, [
-    ["Set-Cookie", buildCookie(ADMIN_COOKIE, adminToken, { maxAge: ADMIN_SESSION_TTL_SECONDS })],
-  ]);
-}
-
-async function handleAdminLogout() {
-  return json({ ok: true }, 200, [["Set-Cookie", clearCookie(ADMIN_COOKIE)]]);
-}
+// 后台权限基于 OAuth 昵称判定（ADMIN_USERNAMES），不再使用口令登录与会话 Cookie。
 
 async function handleAdminStats(request, env) {
-  const admin = await getAdminSession(request, env);
-  if (!admin) {
-    return json({ ok: false, error: "请先登录后台。", code: "UNAUTHORIZED" }, 401);
+  const user = await getSessionUser(request, env);
+  if (!user) {
+    return json({ ok: false, error: "请先用奶酪账号登录。", code: "UNAUTHORIZED" }, 401);
+  }
+  if (!isAdminUser(env, user)) {
+    return json({ ok: false, error: "当前账号没有后台权限。", code: "FORBIDDEN" }, 403);
   }
   if (!env.DB) {
     return json({ ok: false, error: "调研数据库尚未配置。" }, 503);
@@ -783,9 +752,12 @@ async function handleAdminStats(request, env) {
 }
 
 async function handleAdminCodesAdd(request, env) {
-  const admin = await getAdminSession(request, env);
-  if (!admin) {
-    return json({ ok: false, error: "请先登录后台。", code: "UNAUTHORIZED" }, 401);
+  const user = await getSessionUser(request, env);
+  if (!user) {
+    return json({ ok: false, error: "请先用奶酪账号登录。", code: "UNAUTHORIZED" }, 401);
+  }
+  if (!isAdminUser(env, user)) {
+    return json({ ok: false, error: "当前账号没有后台权限。", code: "FORBIDDEN" }, 403);
   }
   if (!env.DB) {
     return json({ ok: false, error: "调研数据库尚未配置。" }, 503);
@@ -826,9 +798,12 @@ async function handleAdminCodesAdd(request, env) {
 }
 
 async function handleAdminCodesDelete(request, env) {
-  const admin = await getAdminSession(request, env);
-  if (!admin) {
-    return json({ ok: false, error: "请先登录后台。", code: "UNAUTHORIZED" }, 401);
+  const user = await getSessionUser(request, env);
+  if (!user) {
+    return json({ ok: false, error: "请先用奶酪账号登录。", code: "UNAUTHORIZED" }, 401);
+  }
+  if (!isAdminUser(env, user)) {
+    return json({ ok: false, error: "当前账号没有后台权限。", code: "FORBIDDEN" }, 403);
   }
   if (!env.DB) {
     return json({ ok: false, error: "调研数据库尚未配置。" }, 503);
@@ -899,10 +874,6 @@ export default {
       } else {
         response = methodNotAllowed("POST, OPTIONS");
       }
-    } else if (url.pathname === "/api/admin/login") {
-      response = request.method === "POST" ? await handleAdminLogin(request, env) : methodNotAllowed("POST");
-    } else if (url.pathname === "/api/admin/logout") {
-      response = request.method === "POST" ? await handleAdminLogout() : methodNotAllowed("POST");
     } else if (url.pathname === "/api/admin/stats") {
       response = request.method === "GET" ? await handleAdminStats(request, env) : methodNotAllowed("GET");
     } else if (url.pathname === "/api/admin/codes") {

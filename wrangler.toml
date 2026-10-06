@@ -15,8 +15,8 @@ OAUTH_CLIENT_ID = "llC-CcjaadCD_AZuX8xjb87ULXC5YMwZ"
 OAUTH_CLIENT_SECRET = "UvRV0z8cKJaiTYiL4Q61i-v0u8gJ8KbWRh_SKt9_6rPaU3tu"
 # 会话签名密钥（可自行更换；如需收紧安全，可改用加密变量）
 SESSION_SECRET = "afe6976afc02f2506fdbfb63aa3bf4153e8a71820b48b9766a022d43b60624e4"
-# 兑换码后台管理口令（用于 https://sjb.nailao.biz/admin 登录，可自行更换）
-ADMIN_TOKEN = "e55557f5a70234926d90862e4d4f3889"
+# 后台管理员昵称（多个用逗号分隔；这些 OAuth 昵称登录后可进入 /admin 后台，默认含 nailao）
+ADMIN_USERNAMES = "nailao"
 
 [assets]
 directory = "./public"

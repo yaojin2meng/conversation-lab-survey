@@ -7,7 +7,7 @@
 1. **登录后填写**：访客需通过 OAuth（nailao.biz）登录后才能看到并提交问卷，未登录一律拦截。
 2. **每人一份**：同一登录账号仅能提交一次，数据库唯一索引兜底。
 3. **提交后发放兑换码**：答卷写入成功后，同一请求内直接从兑换码池分配一枚兑换码并展示；池子为空时提示“还没有开始发放”，可稍后刷新领取。
-4. **前端后台**：`/admin` 管理页可在线批量导入兑换码（ADMIN_TOKEN 登录），也可用 D1 Console 的 SQL。
+4. **前端后台**：用管理员账号（OAuth 昵称在 `ADMIN_USERNAMES` 中，默认 `nailao`）登录后，调研页会出现“后台管理”入口，可直接进入 `/admin` 批量导入兑换码；也可用 D1 Console 的 SQL。
 5. **九道题目**：前三题（应用 / 功能 / 建议）+ 六道模型与付费意愿题；必填项有 * 标记与进度统计。
 
 ## 表单内容
@@ -24,7 +24,7 @@
 
 ## 登录配置（nailao.biz OAuth）
 
-OAuth 与部署所需的变量（含 `OAUTH_CLIENT_SECRET`、`SESSION_SECRET`、`ADMIN_TOKEN`）都已写在 `wrangler.toml` 的 `[vars]` 中，部署即可用；本仓库为公开仓库，如需收紧请见“部署到 Cloudflare”的可选加固。若需更换客户端：
+OAuth 与部署所需的变量（含 `OAUTH_CLIENT_SECRET`、`SESSION_SECRET`）都已写在 `wrangler.toml` 的 `[vars]` 中，部署即可用；本仓库为公开仓库，如需收紧请见“部署到 Cloudflare”的可选加固。若需更换客户端：
 
 1. 打开 `https://nailao.biz/oauth2-clients`（管理员权限）。
 2. 创建客户端：
@@ -35,17 +35,20 @@ OAuth 与部署所需的变量（含 `OAUTH_CLIENT_SECRET`、`SESSION_SECRET`、
 
 其它可配置项：
 
-- `SESSION_SECRET`：登录会话与后台会话的签名密钥（可在 `[vars]` 直接更换）；
-- `ADMIN_TOKEN`：兑换码后台管理口令（可在 `[vars]` 直接更换，用于 https://sjb.nailao.biz/admin 登录）。
+- `ADMIN_USERNAMES`：后台管理员昵称列表（逗号分隔，默认 `nailao`；匹配不区分大小写）；
+- `SESSION_SECRET`：登录会话签名密钥（可在 `[vars]` 直接更换）。
 
 ## 兑换码管理
 
 ### 方式一：线上后台（推荐）
 
-访问 `https://sjb.nailao.biz/admin`，输入 `ADMIN_TOKEN` 登录后：
+访问 `https://sjb.nailao.biz/admin`（或从调研页登录后的“后台管理”入口进入）：
 
+- 未登录时会提示先用奶酪账号登录；管理员账号（昵称在 `ADMIN_USERNAMES` 中）登录后自动进入后台，无需任何口令；
 - 批量粘贴导入兑换码（每行一个，也支持逗号 / 分号分隔；仅限字母、数字、`-`、`_`，3–64 位且至少含一个字母或数字，一次最多 200 个）；
 - 查看兑换码总数 / 已发放 / 剩余 / 答卷数，以及最近 50 条发放记录；未发放的码可删除。
+
+非管理员账号访问时会提示“当前账号没有后台权限”。
 
 ### 方式二：D1 Console SQL
 
@@ -77,7 +80,7 @@ npx wrangler dev --env dev
    npx wrangler d1 migrations apply sjb --remote
    ```
 
-3. （可选）安全加固：如果不希望密钥随仓库公开，把 `OAUTH_CLIENT_SECRET`、`SESSION_SECRET`、`ADMIN_TOKEN` 改为 Cloudflare 加密变量（面板 → Workers → conversation-lab-survey → Settings → Variables and Secrets → 类型选 Encrypted），并从 `wrangler.toml` 删除对应三行。默认配置已包含可用值，直接进入下一步即可。
+3. （可选）安全加固：如果不希望密钥随仓库公开，把 `OAUTH_CLIENT_SECRET`、`SESSION_SECRET` 改为 Cloudflare 加密变量（面板 → Workers → conversation-lab-survey → Settings → Variables and Secrets → 类型选 Encrypted），并从 `wrangler.toml` 删除对应两行。默认配置已包含可用值，直接进入下一步即可。
 
 4. 部署（会按 `wrangler.toml` 绑定自定义域名 `sjb.nailao.biz`）：
 
@@ -85,7 +88,7 @@ npx wrangler dev --env dev
    npx wrangler deploy --env=""
    ```
 
-D1 database_id 与 OAuth 凭据均已在 `wrangler.toml` 中填好，可零配置部署（密钥随公开仓库，如需收紧见上一步）。若 `sjb.nailao.biz` 已有冲突的 DNS 记录，请先在 Cloudflare 面板处理，或删除 `routes` 配置改用面板绑定自定义域名。
+D1 database_id、OAuth 凭据与会话密钥均已在 `wrangler.toml` 中填好，可零配置部署（密钥随公开仓库，如需收紧见上一步）。若 `sjb.nailao.biz` 已有冲突的 DNS 记录，请先在 Cloudflare 面板处理，或删除 `routes` 配置改用面板绑定自定义域名。
 
 ## 构建与部署命令（本地 / Cloudflare Workers Builds 通用）
 
@@ -120,17 +123,18 @@ FROM reward_codes;
 
 ## 安全说明
 
-- 仓库为公开仓库：`OAUTH_CLIENT_SECRET` / `SESSION_SECRET` / `ADMIN_TOKEN` 直接随 `wrangler.toml` 部署（站长确认可公开）；如需收紧可改用加密变量并更换这三个值；
+- 后台权限由 OAuth 昵称判定（`ADMIN_USERNAMES`，默认 `nailao`；匹配不区分大小写），接口对非管理员返回 403；
+- 仓库为公开仓库：`OAUTH_CLIENT_SECRET` / `SESSION_SECRET` 直接随 `wrangler.toml` 部署（站长确认可公开）；如需收紧可改用加密变量并更换这两个值；
 - 所有 SQL 均使用参数化绑定（prepared statements + bind），不做字符串拼接；
 - 后台批量导入兑换码另有白名单校验（`A-Za-z0-9_-`、长度 ≤ 64）与批量上限；
-- 管理口令使用常量时间比较；登录 / 后台会话均为 HMAC 签名 Cookie；
+- 登录 / 后台会话均为 HMAC 签名 Cookie；
 - 表单不询问姓名、邮箱或手机号；登录仅记录授权账号名称用于发放兑换码。请提醒填写者勿在自由文本中写入个人敏感信息。
 
 ## 文件结构
 
 ```text
 public/index.html                    表单前端（登录门面 + 9 题 + 兑换码）
-public/admin.html                    兑换码后台（ADMIN_TOKEN 登录）
+public/admin.html                    兑换码后台（管理员昵称登录）
 public/404.html                      未找到页面
 src/index.js                         Worker API：OAuth 登录、校验、答卷与兑换码、后台接口
 migrations/0001_create_responses.sql D1 建表迁移

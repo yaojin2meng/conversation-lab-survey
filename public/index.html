@@ -356,6 +356,7 @@
     .session-bar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin: 14px 0 -6px; color: var(--soft-text); font-size: 11px; }
     .session-bar strong { max-width: 220px; overflow: hidden; color: var(--ink); font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
     .session-bar .text-button { padding: 2px 6px; font-size: 10px; }
+    .session-bar .session-link { display: inline-flex; align-items: center; padding: 2px 6px; font-size: 10px; text-decoration: none; }
     .gate-view { padding: 34px 0 12px; text-align: center; }
     .gate-icon { display: grid; width: 58px; height: 58px; margin: 0 auto 16px; place-items: center; border-radius: 20px; color: var(--purple); background: var(--purple-soft); }
     .gate-icon svg { width: 27px; height: 27px; }
@@ -447,7 +448,7 @@
           </div>
         </div>
 
-        <div class="session-bar" id="sessionBar" hidden><span>已登录：<strong id="userChipName"></strong></span><button class="text-button" id="logoutButton" type="button">退出登录</button></div>
+        <div class="session-bar" id="sessionBar" hidden><span>已登录：<strong id="userChipName"></strong></span><a class="text-button session-link" id="adminLink" href="/admin" hidden>后台管理</a><button class="text-button" id="logoutButton" type="button">退出登录</button></div>
 
         <section class="gate-view" id="gateView" aria-live="polite">
           <div class="gate-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 10V7a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="4.5" y="10" width="15" height="10.6" rx="2.6" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="15.3" r="1.4" fill="currentColor"/></svg></div>
@@ -720,7 +721,7 @@
       function showSuccessView(scroll,knownCode){gateView.hidden=true;formView.hidden=true;progressWrap.hidden=true;successView.hidden=false;if(currentUser){sessionBar.hidden=false;sessionName.textContent=currentUser.name}if(knownCode){showRewardCode(knownCode)}else{refreshReward()}if(scroll){successView.scrollIntoView({behavior:'smooth',block:'center'})}}
       async function refreshReward(){rewardBox.hidden=false;rewardCodeRow.hidden=true;refreshRewardButton.hidden=true;rewardCode.textContent='';rewardCopy.textContent='正在查询兑换码…';try{const res=await fetch('/api/reward',{credentials:'same-origin'}),data=await res.json().catch(()=>null);if(res.status===401){rewardCopy.textContent='请重新登录后领取兑换码。';return}if(!res.ok||!data||!data.ok){rewardCopy.textContent=(data&&data.error)||'兑换码查询失败，请稍后重试。';refreshRewardButton.hidden=false;return}if(data.code){showRewardCode(data.code)}else{rewardCopy.textContent='兑换码还没有开始发放：管理员放入兑换码后，点击下方按钮即可领取。';refreshRewardButton.hidden=false}}catch(_){rewardCopy.textContent='兑换码查询失败，请检查网络后重试。';refreshRewardButton.hidden=false}}
       function consumeLoginQuery(){const params=new URLSearchParams(location.search),state=params.get('login'),reason=params.get('reason')||'';if(state){try{history.replaceState(null,'',location.pathname+(location.hash||''))}catch(_){}}return{state,reason}}
-      async function initAuth(){const loginQuery=consumeLoginQuery();showGate('checking');sessionBar.hidden=true;let data=null;try{const res=await fetch('/api/auth/me',{credentials:'same-origin'});data=await res.json().catch(()=>null);if(!res.ok||!data||!data.ok)throw new Error('bad response')}catch(_){showGate('offline','');return}if(!data.configured){showGate('unconfigured','缺少配置：'+((data.missing||[]).join('、')||'未说明'));return}if(!data.authenticated){showGate(loginQuery.state==='error'?'error':'login',loginQuery.reason);return}currentUser=data.user||null;if(data.submission){lastResponse=data.submission;renderSummary(data.submission);document.getElementById('successMessage').textContent='你已经完成过本次调研，以下是你的回答记录。';storageNoticeText.textContent='每个账号仅可提交一次；答卷已保存用于调研统计。';showSuccessView(false)}else{showFormView()}}
+      async function initAuth(){const loginQuery=consumeLoginQuery();showGate('checking');sessionBar.hidden=true;let data=null;try{const res=await fetch('/api/auth/me',{credentials:'same-origin'});data=await res.json().catch(()=>null);if(!res.ok||!data||!data.ok)throw new Error('bad response')}catch(_){showGate('offline','');return}if(!data.configured){showGate('unconfigured','缺少配置：'+((data.missing||[]).join('、')||'未说明'));return}if(!data.authenticated){showGate(loginQuery.state==='error'?'error':'login',loginQuery.reason);return}currentUser=data.user||null;document.getElementById('adminLink').hidden=!data.admin;if(data.submission){lastResponse=data.submission;renderSummary(data.submission);document.getElementById('successMessage').textContent='你已经完成过本次调研，以下是你的回答记录。';storageNoticeText.textContent='每个账号仅可提交一次；答卷已保存用于调研统计。';showSuccessView(false)}else{showFormView()}}
       loginButton.addEventListener('click',()=>{loginButton.hidden=true;gateCopy.textContent='正在跳转到登录页面…'});
       document.getElementById('logoutButton').addEventListener('click',async()=>{try{await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin'})}catch(_){}location.reload()});
       refreshRewardButton.addEventListener('click',()=>{refreshReward()});

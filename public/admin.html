@@ -35,6 +35,7 @@
     button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border: 0; border-radius: 10px; color: #fff; background: linear-gradient(135deg, #7569e2, #5b4fcf); font-size: 12px; font-weight: 700; cursor: pointer; }
     button.secondary { color: var(--muted); background: var(--surface); border: 1px solid var(--line); font-weight: 600; }
     button:disabled { opacity: .6; cursor: wait; }
+    .btn-link { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 10px; color: #fff; background: linear-gradient(135deg, #7569e2, #5b4fcf); font-size: 12px; font-weight: 700; text-decoration: none; }
     .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     .msg { margin: 10px 0 0; font-size: 12px; min-height: 18px; }
     .msg.ok { color: var(--ok); }
@@ -50,6 +51,8 @@
     .status-ok { color: var(--ok); }
     .status-wait { color: var(--soft); }
     .hint { color: var(--soft); font-size: 11px; }
+    .whoami { margin: 6px 0 0; color: var(--soft); font-size: 11px; }
+    .whoami b { color: var(--ink); }
     .topline { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
     a { color: var(--purple); font-size: 12px; }
     [hidden] { display: none !important; }
@@ -63,19 +66,19 @@
       <a href="/">返回调研页</a>
     </div>
 
-    <section class="card" id="loginCard">
-      <h2>管理员登录</h2>
-      <label for="adminToken">管理口令（ADMIN_TOKEN）</label>
-      <input id="adminToken" type="password" autocomplete="current-password" placeholder="输入管理口令">
-      <div class="row" style="margin-top: 12px"><button id="loginButton" type="button">进入后台</button></div>
-      <p class="msg err" id="loginMessage"></p>
-      <p class="hint">口令配置在 wrangler.toml 的 ADMIN_TOKEN 中，请勿泄露给他人。</p>
+    <section class="card" id="gateCard">
+      <h2>管理员后台</h2>
+      <p class="hint" id="gateText">正在检查登录状态…</p>
+      <div class="row" style="margin-top: 12px">
+        <a class="btn-link" id="loginLink" href="/api/auth/login?next=%2Fadmin" hidden>使用奶酪账号登录</a>
+        <button class="secondary" id="gateLogout" type="button" hidden>退出登录</button>
+      </div>
     </section>
 
     <section class="card" id="dashCard" hidden>
       <div class="topline">
-        <h2 style="margin: 0">数据概览</h2>
-        <div class="row"><button class="secondary" id="refreshButton" type="button">刷新</button><button class="secondary" id="logoutButton" type="button">退出后台</button></div>
+        <div><h2 style="margin: 0">数据概览</h2><p class="whoami">已登录：<b id="whoami">-</b>（管理员）</p></div>
+        <div class="row"><button class="secondary" id="refreshButton" type="button">刷新</button><button class="secondary" id="logoutButton" type="button">退出登录</button></div>
       </div>
       <div class="stats">
         <div class="stat"><b id="statTotal">0</b><span>兑换码总数</span></div>
@@ -107,8 +110,9 @@
     (() => {
       'use strict';
       const $ = (id) => document.getElementById(id);
-      const loginCard = $('loginCard'), dashCard = $('dashCard'), addCard = $('addCard'), listCard = $('listCard');
-      const loginMessage = $('loginMessage'), addMessage = $('addMessage'), codesBody = $('codesBody'), listEmpty = $('listEmpty');
+      const gateCard = $('gateCard'), dashCard = $('dashCard'), addCard = $('addCard'), listCard = $('listCard');
+      const gateText = $('gateText'), loginLink = $('loginLink'), gateLogout = $('gateLogout');
+      const addMessage = $('addMessage'), codesBody = $('codesBody'), listEmpty = $('listEmpty');
 
       async function api(path, options = {}) {
         const response = await fetch(path, { credentials: 'same-origin', ...options });
@@ -117,13 +121,15 @@
         return { response, data };
       }
 
-      function showLogin(message) {
-        loginCard.hidden = false; dashCard.hidden = true; addCard.hidden = true; listCard.hidden = true;
-        loginMessage.textContent = message || '';
+      function showGate(text, options = {}) {
+        gateCard.hidden = false; dashCard.hidden = true; addCard.hidden = true; listCard.hidden = true;
+        gateText.textContent = text;
+        loginLink.hidden = !options.login;
+        gateLogout.hidden = !options.logout;
       }
 
       function showDashboard() {
-        loginCard.hidden = true; dashCard.hidden = false; addCard.hidden = false; listCard.hidden = false;
+        gateCard.hidden = true; dashCard.hidden = false; addCard.hidden = false; listCard.hidden = false;
       }
 
       function fmtTime(value) {
@@ -169,8 +175,9 @@
 
       async function loadStats() {
         const { response, data } = await api('/api/admin/stats');
-        if (response.status === 401) { showLogin('请先登录后台。'); return false; }
-        if (!response.ok || !data || !data.ok) { showLogin((data && data.error) || '后台数据加载失败，请稍后重试。'); return false; }
+        if (response.status === 401) { showGate('请先用奶酪账号登录；管理员账号登录后会自动进入后台。', { login: true }); return false; }
+        if (response.status === 403) { showGate('当前账号没有后台权限。可以用管理员账号登录，或退出后切换账号。', { logout: true }); return false; }
+        if (!response.ok || !data || !data.ok) { showGate((data && data.error) || '后台数据加载失败，请稍后重试。', { logout: true }); return false; }
         showDashboard();
         $('statTotal').textContent = String(data.total);
         $('statAssigned').textContent = String(data.assigned);
@@ -180,26 +187,21 @@
         return true;
       }
 
-      $('loginButton').addEventListener('click', async () => {
-        const token = $('adminToken').value.trim();
-        if (!token) { loginMessage.textContent = '请输入管理口令。'; return; }
-        loginMessage.textContent = '';
-        $('loginButton').disabled = true;
-        try {
-          const { response, data } = await api('/api/admin/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token }),
-          });
-          if (!response.ok || !data || !data.ok) { loginMessage.textContent = (data && data.error) || '登录失败，请重试。'; return; }
-          $('adminToken').value = '';
-          await loadStats();
-        } catch (_) {
-          loginMessage.textContent = '网络异常，请稍后重试。';
-        } finally {
-          $('loginButton').disabled = false;
+      async function init() {
+        const { response, data } = await api('/api/auth/me');
+        if (!response.ok || !data || !data.ok) { showGate('无法连接服务器，请从部署后的网址访问。'); return; }
+        if (!data.configured) { showGate('登录功能尚未配置完成。'); return; }
+        if (!data.authenticated) {
+          showGate('请先用奶酪账号登录；管理员账号（昵称在 ADMIN_USERNAMES 中，默认 nailao）会自动进入后台。', { login: true });
+          return;
         }
-      });
+        if (!data.admin) {
+          showGate('当前账号（' + ((data.user && data.user.name) || '未知') + '）不是管理员。默认管理员昵称：nailao。', { logout: true });
+          return;
+        }
+        $('whoami').textContent = (data.user && data.user.name) || '管理员';
+        await loadStats();
+      }
 
       $('addButton').addEventListener('click', async () => {
         const codes = $('codesInput').value.split(/[\n\r,，;；]+/).map((item) => item.trim()).filter(Boolean);
@@ -252,11 +254,15 @@
 
       $('refreshButton').addEventListener('click', () => { loadStats(); });
       $('logoutButton').addEventListener('click', async () => {
-        try { await api('/api/admin/logout', { method: 'POST' }); } catch (_) {}
-        showLogin('已退出后台。');
+        try { await api('/api/auth/logout', { method: 'POST' }); } catch (_) {}
+        location.reload();
+      });
+      gateLogout.addEventListener('click', async () => {
+        try { await api('/api/auth/logout', { method: 'POST' }); } catch (_) {}
+        location.reload();
       });
 
-      loadStats();
+      init();
     })();
   </script>
 </body>
